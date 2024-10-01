@@ -5,6 +5,7 @@ use crate::utils::random;
 use std::hash::Hash;
 use std::ptr::null;
 use rand::random;
+use crate::engine::cost::Score;
 use crate::staff::staff::Staff;
 
 pub struct Alns {
@@ -18,7 +19,8 @@ pub struct Alns {
     operator_time: [i8; 5],
     operator_probabilities: [i8; 5],
     solution: HashMap<String,HashMap<i8,String>>,
-    input: InputData
+    input: InputData,
+    score: Score
 }
 
 impl Alns {
@@ -34,7 +36,8 @@ impl Alns {
             operator_time: [0; 5],
             operator_probabilities: [0; 5],
             solution: HashMap::new(),
-            input: input_data
+            input: input_data,
+            score: Score::init()
         }
     }
 
@@ -222,7 +225,7 @@ impl Alns {
         //    let operator_index = self.routeWheel(&iter_num);
         //    let next_solution = self.shake_and_repair(&current_solution, operator_index);
         //    current_solution = self.simulate_annealing(&current_solution, &next_solution);
-        //    if (calculate.totalScore(&current_solution) > calculate.totalScore(&self.solution)){
+        //    if (self.score.calculate_total_score(&self.input, &current_solution) > self.score.calculate_total_score(&self.input, &self.solution)){
         //        this.solution = current_solution.clone()
         //    }
         //}

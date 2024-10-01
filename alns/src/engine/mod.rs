@@ -1,3 +1,3 @@
 pub mod alns;
-mod cost;
-mod preprocessing;
+pub mod cost;
+pub mod preprocessing;
