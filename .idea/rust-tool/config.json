@@ -1,0 +1,22 @@
+{
+  "url" : "http://localhost:8080",
+  "apiBox" : true,
+  "logicBox" : true,
+  "modelBox" : true,
+  "dtoBox" : true,
+  "packagePath" : null,
+  "apiPath" : null,
+  "logicPath" : null,
+  "modelPath" : null,
+  "prefix" : null,
+  "apiSuffix" : "_api.rs",
+  "logicSuffix" : "_logic.rs",
+  "webBox" : "Actix",
+  "dtoSuffix" : "Dto",
+  "viewApiPath" : null,
+  "viewPagePath" : null,
+  "viewRouterPath" : null,
+  "viewSuffix" : "Page.vue",
+  "consoleKey" : "RustTool",
+  "pathPrefix" : ""
+}

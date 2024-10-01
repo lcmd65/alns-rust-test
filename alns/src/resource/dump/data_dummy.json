@@ -1,0 +1,896 @@
+{
+  "schedule_period": 4,
+  "start_date": {
+    "day": 9,
+    "month": 12,
+    "year": 2024
+  },
+  "objs": [
+  ],
+  "constrains": [
+    {
+      "id": "exactly-staff-working-time",
+      "score_formula": "formula(100.0, 44.0, 10.0, 1,0)",
+      "description": "maximize working time of Staff (hours)",
+      "constrain_type": "staffTimeObj",
+      "staff_groups": ["all_staffs"],
+      "priority": 9,
+      "to_maximize": false,
+      "is_hard": true
+    },
+    {
+      "id": "archive-0.5-day",
+      "score_formula": "formula(100.0, 5.5, 200.0, 1.0)",
+      "description": "maximize working time of Staff (hours)",
+      "constrain_type": "staffTimeObj",
+      "staff_groups": ["Staff_1", "Staff_3", "Staff_6"],
+      "priority": 8,
+      "to_maximize": false,
+      "is_hard": true
+    },
+    {
+      "id": "un-archive-0.5-day",
+      "score_formula": "formula(100.0, 6.0, 200.0, 1.0)",
+      "description": "maximize working time of Staff (hours)",
+      "constrain_type": "staffTimeObj",
+      "staff_groups":  ["Staff_2", "Staff_4", "Staff_5", "Staff_7",  "Staff_8",  "Staff_9"],
+      "priority": 7,
+      "to_maximize": true,
+      "is_hard": true
+    }
+  ],
+  "pattern_constrains": [
+    {
+      "id": "undesired-after-off-day",
+      "description": "",
+      "constrain_type": "shiftPattern",
+      "shift_patterns": ["DO-A1", "DO-A2", "PH-A1", "PH-A2"],
+      "staff_groups": ["all_staffs"],
+      "priority": 5,
+      "exist": false,
+      "is_hard": false,
+      "penalty": 50
+    },
+    {
+      "id": "undesired-afternoon-shift",
+      "description": "",
+      "constrain_type": "shiftPattern",
+      "shift_patterns": ["A1-A1-A1", "A2-A2-A2", "A2-A1-A1","A1-A2-A1", "A1-A1-A2", "A2-A2-A1","A1-A2-A2", "A2-A1-A2"],
+      "staff_groups": ["all_staffs"],
+      "priority": 6,
+      "exist": false,
+      "is_hard": false,
+      "penalty": 50
+    },
+    {
+      "id": "undesired-fixed-shift",
+      "description": "",
+      "constrain_type": "shiftPattern",
+      "shift_patterns": ["M1-A1", "M1-A2", "M2-A1", "M2-A2", "M3-A1", "M3-A2"],
+      "staff_groups": ["FSG"],
+      "priority": 4,
+      "exist": false,
+      "is_hard": false,
+      "penalty": 50
+    }
+  ],
+  "staffs":[
+    {
+      "id": "Staff_1",
+      "name": "Dat09",
+      "work_days": 5.5
+    },
+    {
+      "id": "Staff_2",
+      "name": "Dat09",
+      "work_days": 6
+    },
+    {
+      "id": "Staff_3",
+      "name": "Dat09",
+      "work_days": 5.5
+    },
+    {
+      "id": "Staff_4",
+      "name": "Dat09",
+      "work_days": 6
+    },
+    {
+      "id": "Staff_5",
+      "name": "Dat09",
+      "work_days": 6
+    },
+    {
+      "id": "Staff_6",
+      "name": "Dat09",
+      "work_days": 5.5
+    },
+    {
+      "id": "Staff_7",
+      "name": "Dat09",
+      "work_days": 6
+    },
+    {
+      "id": "Staff_8",
+      "name": "Dat09",
+      "work_days": 6
+    },
+    {
+      "id": "Staff_9",
+      "name": "Dat09",
+      "work_days": 6
+    }
+  ],
+  "staff_groups": [
+    {
+      "id": "AG1",
+      "staff_list": [
+        "Staff_1",
+        "Staff_2",
+        "Staff_3",
+        "Staff_4"
+      ]
+    },
+    {
+      "id": "AG2",
+      "staff_list": [
+        "Staff_7",
+        "Staff_8",
+        "Staff_9"
+      ]
+    },{
+      "id": "AG3",
+      "staff_list": [
+        "Staff_5",
+        "Staff_6"
+      ]
+    },
+    {
+      "id": "AG3",
+      "staff_list": [
+        "Staff_5",
+        "Staff_6"
+      ]
+    },
+    {
+      "id": "FSG",
+      "staff_list": [
+        "Staff_1",
+        "Staff_6"
+      ]
+    },
+    {
+      "id": "OPH",
+      "staff_list": [
+        "Staff_2",
+        "Staff_3",
+        "Staff_4",
+        "Staff_9"
+      ]
+    }
+  ],
+  "coverages": [
+    {
+      "id": "AM-ALL-1",
+      "staff_groups": ["AG1", "AG2", "AG3"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 4,
+      "day": 1,
+      "day_type": "wd",
+      "priority": 1,
+      "penalty": 100,
+      "types": ["hard", "equal to"]
+    },
+    {
+      "id": "AM-ALL-2",
+      "staff_groups": ["AG1", "AG2", "AG3"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 4,
+      "day": 2,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "equal to"]
+    },
+    {
+      "id": "AM-ALL-3",
+      "staff_groups": ["AG1", "AG2", "AG3"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 4,
+      "day": 3,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "equal to"]
+    },
+    {
+      "id": "AM-ALL-4",
+      "staff_groups": ["AG1", "AG2", "AG3"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 4,
+      "day": 4,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "equal to"]
+    },
+    {
+      "id": "AM-ALL-5",
+      "staff_groups": ["AG1", "AG2", "AG3"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 4,
+      "day": 5,
+
+
+
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "equal to"]
+    },
+    {
+      "id": "AM-ALL-6",
+      "staff_groups": ["AG1", "AG2", "AG3"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 3,
+      "day": 1,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "equal to"]
+    },
+    {
+      "id": "AM-ALL-7",
+      "staff_groups": ["AG1", "AG2", "AG3"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 3,
+      "day": 7,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "equal to"]
+    },
+    {
+      "id": "PM-ALL-1",
+      "staff_groups": ["AG1", "AG2", "AG3"],
+      "shift": ["A1", "A2"],
+      "desire_value": 3,
+      "day": 1,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "equal to"]
+    },
+    {
+      "id": "PM-ALL-2",
+      "staff_groups": ["AG1", "AG2", "AG3"],
+      "shift": ["A1", "A2"],
+      "desire_value": 3,
+      "day": 2,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "equal to"]
+    },
+    {
+      "id": "PM-ALL-3",
+      "staff_groups": ["AG1", "AG2", "AG3"],
+      "shift": ["A1", "A2"],
+      "desire_value": 3,
+      "day": 3,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "equal to"]
+    },
+    {
+      "id": "PM-ALL-4",
+      "staff_groups": ["AG1", "AG2", "AG3"],
+      "shift": ["A1", "A2"],
+      "desire_value": 3,
+      "day": 4,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "equal to"]
+    },
+    {
+      "id": "PM-ALL-5",
+      "staff_groups": ["AG1", "AG2", "AG3"],
+      "shift": ["A1", "A2"],
+      "desire_value": 3,
+      "day": 5,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "equal to"]
+    },
+    {
+      "id": "PM-ALL-6",
+      "staff_groups": ["AG1", "AG2", "AG3"],
+      "shift": ["A1", "A2"],
+      "desire_value": 3,
+      "day": 6,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "equal to"]
+    },
+    {
+      "id": "PM-ALL-7",
+      "staff_groups": ["AG1", "AG2", "AG3"],
+      "shift": ["A1", "A2"],
+      "desire_value": 3,
+      "day": 7,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "equal to"]
+    },
+    {
+      "id": "AM-AG1-1",
+      "staff_groups": ["AG1"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 1,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG1-2",
+      "staff_groups": ["AG1"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 2,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG1-3",
+      "staff_groups": ["AG1"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 3,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG1-4",
+      "staff_groups": ["AG1"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 4,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG1-5",
+      "staff_groups": ["AG1"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 5,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG1-6",
+      "staff_groups": ["AG1"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 6,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG1-7",
+      "staff_groups": ["AG1"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 7,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "PM-AG1-1",
+      "staff_groups": ["AG1"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 1,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG1-2",
+      "staff_groups": ["AG1"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 2,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG1-3",
+      "staff_groups": ["AG1"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 3,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG1-4",
+      "staff_groups": ["AG1"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 4,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG1-5",
+      "staff_groups": ["AG1"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 5,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG1-6",
+      "staff_groups": ["AG1"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 6,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG1-7",
+      "staff_groups": ["AG1"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 7,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "AM-AG2-1",
+      "staff_groups": ["AG2"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 1,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG2-2",
+      "staff_groups": ["AG2"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 2,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG2-3",
+      "staff_groups": ["AG2"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 3,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG2-4",
+      "staff_groups": ["AG2"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 4,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG2-5",
+      "staff_groups": ["AG2"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 5,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG2-6",
+      "staff_groups": ["AG2"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 6,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG2-7",
+      "staff_groups": ["AG2"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 7,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "PM-AG2-1",
+      "staff_groups": ["AG2"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 1,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG2-2",
+      "staff_groups": ["AG2"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 2,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG2-3",
+      "staff_groups": ["AG2"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 3,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG2-4",
+      "staff_groups": ["AG2"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 4,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG2-5",
+      "staff_groups": ["AG2"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 5,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG2-6",
+      "staff_groups": ["AG2"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 6,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG2-7",
+      "staff_groups": ["AG2"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 7,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "AM-AG3-1",
+      "staff_groups": ["AG3"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 1,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG3-2",
+      "staff_groups": ["AG3"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 2,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG3-3",
+      "staff_groups": ["AG3"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 3,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG3-4",
+      "staff_groups": ["AG3"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 4,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG3-5",
+      "staff_groups": ["AG3"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 5,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG3-6",
+      "staff_groups": ["AG3"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 6,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "AM-AG3-7",
+      "staff_groups": ["AG3"],
+      "shift": ["M1", "M2", "M3"],
+      "desire_value": 1,
+      "day": 7,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 5,
+      "types": ["soft", "at least"]
+    },
+    {
+      "id": "PM-AG3-1",
+      "staff_groups": ["AG3"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 1,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG3-2",
+      "staff_groups": ["AG3"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 2,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG3-3",
+      "staff_groups": ["AG3"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 3,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG3-4",
+      "staff_groups": ["AG3"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 4,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG3-5",
+      "staff_groups": ["AG3"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 5,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG3-6",
+      "staff_groups": ["AG3"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 6,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    },
+    {
+      "id": "PM-AG3-7",
+      "staff_groups": ["AG3"],
+      "shift": ["A1", "A2"],
+      "desire_value": 1,
+      "day": 7,
+      "day_type": "wd",
+      "priority":  1,
+      "penalty": 100,
+      "types": ["hard", "at least"]
+    }
+  ],
+  "shifts": [
+    {
+      "id": "M1",
+      "name": "Morning shift 1",
+      "duration": 8,
+      "shift_type": "ws"
+    },
+    {
+      "id": "M2",
+      "name": "Morning shift 2",
+      "duration": 7,
+      "shift_type": "ws"
+    },
+    {
+      "id": "M3",
+      "name": "Morning shift 3",
+      "duration": 4,
+      "shift_type": "ws"
+    },
+    {
+      "id": "A1",
+      "name": "Afternoon shift 1",
+      "duration": 8,
+      "shift_type": "ws"
+    },
+    {
+      "id": "A2",
+      "name": "Afternoon shift 2",
+      "duration": 7,
+      "shift_type": "ws"
+    },
+    {
+      "id": "DO",
+      "name": "Day Off",
+      "duration": 0,
+      "shift_type": "nws"
+    },
+    {
+      "id": "PH",
+      "name": "PH",
+      "duration": 8,
+      "shift_type": "nws"
+    }
+  ],
+  "shift_groups": [
+    {
+      "id": "AF",
+      "shifts": ["A1", "A2"]
+    },
+    {
+      "id": "MO",
+      "shifts": ["M1", "M2", "M3"]
+    }
+  ],
+  "horizontal_coverages": [
+    {
+      "id":  "DO",
+      "shifts": ["DO"],
+      "staffs": ["all_staffs"],
+      "types": ["hard", "equal to"],
+      "desire_value": 1,
+      "days": [1,2,3,4,5,6,7],
+      "penalty": 100,
+      "priority": 10
+    }
+  ],
+  "public_holidays": [
+    {
+      "day": 30,
+      "month": 4,
+      "year": 2024
+    },
+    {
+      "day": 1,
+      "month": 5,
+      "year": 2024
+    },
+    {
+      "day": 2,
+      "month": 9,
+      "year": 2024
+    },
+    {
+      "day": 24,
+      "month": 12,
+      "year": 2024
+    },
+    {
+      "day": 25,
+      "month": 12,
+      "year": 2024
+    },
+    {
+      "day": 31,
+      "month": 12,
+      "year": 2024
+    },
+    {
+      "day": 1,
+      "month": 1,
+      "year": 2024
+    }
+  ]
+}
