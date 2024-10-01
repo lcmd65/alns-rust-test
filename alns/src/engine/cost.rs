@@ -4,11 +4,11 @@ use crate::coverage::coverage::Coverage;
 use crate::input::input::InputData;
 
 pub struct Score{
-    optimization_score: f64,
-    constraint_score: f64,
-    coverage_score:f64,
-    horizontal_coverage_score: f64,
-    pattern_constraint_score: f64
+    optimization_score: f32,
+    constraint_score: f32,
+    coverage_score:f32,
+    horizontal_coverage_score: f32,
+    pattern_constraint_score: f32
 }
 
 impl Score {
@@ -25,28 +25,28 @@ impl Score {
     }
 
 
-    fn calculate_horizontal_coverage_score(input_data: &InputData,  schedule: &HashMap<String,HashMap<i8, String>>) -> f64{
+    pub(crate) fn  calculate_horizontal_coverage_score(&self, input_data: &InputData,  schedule: &HashMap<String,HashMap<i8, String>>) -> f32{
 
         0.0
     }
 
-    fn calculate_constraint_score(input_data: &InputData,  schedule: &HashMap<String,HashMap<i8, String>>) -> f64{
+    pub(crate) fn  calculate_constraint_score(&self, input_data: &InputData,  schedule: &HashMap<String,HashMap<i8, String>>) -> f32{
 
         0.0
     }
 
-    fn calculate_pattern_constraint_score(input_data: &InputData,  schedule: &HashMap<String,HashMap<i8, String>>) -> f64{
+    pub(crate) fn  calculate_pattern_constraint_score(&self, input_data: &InputData,  schedule: &HashMap<String,HashMap<i8, String>>) -> f32{
 
         0.0
     }
 
-    fn calculate_coverage_score(input_data: &InputData,  schedule: &HashMap<String,HashMap<i8, String>>) -> f64{
+    pub(crate) fn  calculate_coverage_score(&self, input_data: &InputData,  schedule: &HashMap<String,HashMap<i8, String>>) -> f32{
 
        0.0
     }
 
 
-    fn calculate_total_score(input_data: &InputData,  schedule: &HashMap<String,HashMap<i8, String>>) -> f64{
+    pub(crate) fn calculate_total_score(&self, input_data: &InputData,  schedule: &HashMap<String,HashMap<i8, String>>) -> f32{
 
         0.0
     }

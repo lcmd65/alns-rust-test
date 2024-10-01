@@ -5,7 +5,8 @@ use crate::utils::random;
 use std::hash::Hash;
 use crate::utils::to_excel;
 use std::ptr::null;
-use rand::random;
+use std::thread::current;
+use rand::{random, thread_rng, Rng};
 use crate::engine::cost::Score;
 use crate::staff::staff::Staff;
 
@@ -13,12 +14,12 @@ pub struct Alns {
     max_iteration: i32,
     delta_e: f32,
     alpha: f32,
+    limit: f32,
     temperature: f32,
-    operator_score: [i8; 5],
-
-    operator_weight: [i8; 5],
-    operator_time: [i8; 5],
-    operator_probabilities: [i8; 5],
+    operator_score: [f32; 5],
+    operator_weight: [f32; 5],
+    operator_time: [f32; 5],
+    operator_probabilities: [f32; 5],
     solution: HashMap<String,HashMap<i8,String>>,
     input: InputData,
     score: Score
@@ -29,16 +30,34 @@ impl Alns {
     pub fn init(input_data: InputData) -> Self {
         Self {
             max_iteration: 1000,
-            delta_e: 0.05,
-            alpha: 100.0,
+            delta_e: 0.0,
+            limit: 0.005,
+            alpha: 0.95,
             temperature: 100.0,
-            operator_score: [0; 5],
-            operator_weight: [0; 5],
-            operator_time: [0; 5],
-            operator_probabilities: [0; 5],
+            operator_score: [0.2; 5],
+            operator_weight: [0.0; 5],
+            operator_time: [0.0; 5],
+            operator_probabilities: [0.0; 5],
             solution: HashMap::new(),
             input: input_data,
             score: Score::init()
+        }
+    }
+
+    fn update_weight(&mut self){
+        for index in 0..=4{
+            if self.operator_weight[index] == 0.0 {
+                self.operator_weight[index] = 0.2 + 0.8 * &self.operator_score[index] / &self.operator_time[index];
+            }
+            else {
+                self.operator_weight[index] = 0.2*self.operator_weight[index] + 0.8 * &self.operator_score[index] / &self.operator_time[index];
+            }
+        }
+    }
+
+    fn reset_weight(&mut self){
+        for index in 0..=4{
+            self.operator_weight[index] = 0.0;
         }
     }
 
@@ -106,9 +125,9 @@ impl Alns {
         bool_value
     }
 
-    fn is_a_day(&self, schedule: &HashMap<String, HashMap<i8, String>>, staff: &String, index: i8, shift_info: &str) -> bool{
+    fn is_a_day(&self, schedule: &HashMap<String, HashMap<i8, String>>, staff: &String, index: i8, shift_information: &str) -> bool{
         let bool_value = match schedule[staff].get(&index).unwrap().as_str() {
-            shift_info => true,
+            shift_information => true,
             _ => false
         };
 
@@ -169,8 +188,40 @@ impl Alns {
         number_coverage_fulfill
     }
 
-    fn route_wheel(&self, index: i8){
+    fn route_wheel(&mut self, iter: i32) -> i8{
+        if (iter % 400 == 0){
+            self.reset_weight()
+        }
+        else {
+            self.update_weight()
+        }
 
+        let rand: f32 = random();;
+        let mut sum =0.0;
+
+        for index in 0.. self.operator_weight.len(){
+            sum += &self.operator_weight[index];
+        }
+
+        self.operator_probabilities[0] = &self.operator_weight[0]/sum;
+
+        for index in 1.. self.operator_weight.len(){
+            self.operator_probabilities[index] =  &self.operator_probabilities[index-1] +  &self.operator_weight[index]/sum;
+        }
+
+        let mut choose_value:i8 = 0;
+        if (rand <= self.operator_probabilities[0]){
+            choose_value = 0;
+        }
+        else{
+            for index in 1 ..= self.operator_weight.len() {
+                if rand > self.operator_probabilities[index - 1] && rand <= self.operator_probabilities[index] {
+                    choose_value = index as i8
+                }
+            }
+        }
+
+        choose_value
     }
 
     fn random_destroy_solution(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
@@ -196,17 +247,13 @@ impl Alns {
             for week in 1..= self.input.schedule_period{
                 for day in 0..=6{
                     if self.is_a_day(*&schedule, &staff.id, &day + 7 * (&week - 1), ""){
+                        let mut random_shift = random::random_choice(&self.input.shifts);
                         if staff.work_days == 5.5 {
-                            let mut random_shift = random::random_choice(&self.input.shifts);
-
                             while(*&random_shift.id == "M2".to_string()
                                 || *&random_shift.id == "A2".to_string()
                                 || *&random_shift.id == "PH".to_string()
                             ) {
                                 random_shift = random::random_choice(&self.input.shifts);
-                            }
-                            if let Some(inner_map) = schedule.get_mut(&staff.id) {
-                                inner_map.insert(&day + 7 * (&week - 1), random_shift.id.to_string());
                             }
                         }
                         else{
@@ -217,9 +264,10 @@ impl Alns {
                             ) {
                                 random_shift = random::random_choice(&self.input.shifts);
                             }
-                            if let Some(inner_map) = schedule.get_mut(&staff.id) {
-                                inner_map.insert(&day + 7 * (&week - 1), random_shift.id.to_string());
-                            }
+                        }
+
+                        if let Some(inner_map) = schedule.get_mut(&staff.id) {
+                            inner_map.insert(&day + 7 * (&week - 1), random_shift.id.to_string());
                         }
                     }
                 }
@@ -229,27 +277,60 @@ impl Alns {
         schedule.to_owned()
     }
 
-    fn simulate_annealing(&self, schedule: &HashMap<String,HashMap<i8, String>>, next_schedule: &HashMap<String,HashMap<i8, String>>){
+    fn simulate_annealing(&mut self, schedule: &HashMap<String,HashMap<i8, String>>, next_schedule: &HashMap<String,HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
+        self.delta_e = &self.score.calculate_total_score(&self.input, &schedule) - &self.score.calculate_total_score(&self.input, &next_schedule);
+        if (self.delta_e < 0.0){
+            return next_schedule.clone()
+        }
+        else {
+            if self.temperature < self.limit {
+                return schedule.clone()
+            }
+            let probability = (self.delta_e / self.temperature).exp();
+            let acceptance_variable = random::random_choice_from_range_double(0.0, 1.0);
 
+            self.temperature *= self.alpha;
+            if (probability < acceptance_variable as f32) {
+                return next_schedule.clone()
+            }
+        }
+
+        schedule.clone()
     }
 
-    fn shake_and_repair(&self, schedule: &HashMap<String,HashMap<i8, String>>, operator_index: &i32) -> HashMap<String, HashMap<i8, String>> {
+    fn  random_swap_staff_shift(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
+        let mut next_schedule = self.random_destroy_solution(schedule);
+        next_schedule = self.repair_solution(schedule);
 
-        schedule.to_owned()
+        next_schedule
+    }
+
+    fn shake_and_repair(&self, schedule: &mut HashMap<String,HashMap<i8, String>>, operator_index: i8) -> HashMap<String, HashMap<i8, String>> {
+        let result = match operator_index{
+            0 => self.random_swap_staff_shift(schedule),
+            1 => self.random_swap_staff_shift(schedule),
+            2 => self.random_swap_staff_shift(schedule),
+            3 => self.random_swap_staff_shift(schedule),
+            4 => self.random_swap_staff_shift(schedule),
+            _ => schedule.clone()
+        };
+
+        result
     }
 
 
     pub fn run_iteration(&mut self){
         let mut current_solution = self.initial_solution();
         self.solution = current_solution.clone();
-        //for iter_num in 1..= self.max_iteration{
-        //    let operator_index = self.routeWheel(&iter_num);
-        //    let next_solution = self.shake_and_repair(&current_solution, operator_index);
-        //    current_solution = self.simulate_annealing(&current_solution, &next_solution);
-        //    if (self.score.calculate_total_score(&self.input, &current_solution) > self.score.calculate_total_score(&self.input, &self.solution)){
-        //        this.solution = current_solution.clone()
-        //    }
-        //}
+        for iter_num in 1..= self.max_iteration{
+            let operator_index = self.route_wheel(iter_num);
+            self.operator_time[operator_index as usize] += 1.0;
+            let next_solution = self.shake_and_repair(&mut current_solution, operator_index);
+            current_solution = self.simulate_annealing(&current_solution, &next_solution);
+            if (self.score.calculate_total_score(&self.input, &current_solution) > self.score.calculate_total_score(&self.input, &self.solution)){
+                self.solution = current_solution.clone()
+            }
+        }
         self.print_solution();
     }
 
