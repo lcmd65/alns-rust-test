@@ -166,49 +166,72 @@ impl Alns {
         schedule.to_owned()
     }
 
-    fn repair_solution<'a>(&self, schedule: &'a HashMap<String,HashMap<i8, String>>) -> &'a HashMap<String, HashMap<i8, String>> {
+    fn repair_solution(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
 
         for staff in &self.input.staffs {
             for week in 1..= self.input.schedule_period{
                 for day in 0..=6{
                     if self.is_a_day(*&schedule, &staff.id, &day + 7 * (&week - 1), ""){
+                        if staff.work_days == 5.5 {
+                            let mut random_shift = random::random_choice(&self.input.shifts);
 
+                            while(*&random_shift.id == "M2".to_string()
+                                || *&random_shift.id == "A2".to_string()
+                                || *&random_shift.id == "PH".to_string()
+                            ) {
+                                random_shift = random::random_choice(&self.input.shifts);
+                            }
+                            if let Some(inner_map) = schedule.get_mut(&staff.id) {
+                                inner_map.insert(&day + 7 * (&week - 1), random_shift.id.to_string());
+                            }
+                        }
+                        else{
+                            let mut random_shift = random::random_choice(&self.input.shifts);
 
+                            while(*&random_shift.id == "M3".to_string()
+                                || *&random_shift.id == "PH".to_string()
+                            ) {
+                                random_shift = random::random_choice(&self.input.shifts);
+                            }
+                            if let Some(inner_map) = schedule.get_mut(&staff.id) {
+                                inner_map.insert(&day + 7 * (&week - 1), random_shift.id.to_string());
+                            }
+                        }
                     }
                 }
             }
 
         }
-        schedule
+        schedule.to_owned()
     }
 
     fn simulate_annealing(&self, schedule: &HashMap<String,HashMap<i8, String>>, next_schedule: &HashMap<String,HashMap<i8, String>>){
 
     }
 
-    fn shake_and_repair(&self, schedule: &HashMap<String,HashMap<i8, String>>, operator_index: &i32) -> &HashMap<String, HashMap<i8, String>> {
+    fn shake_and_repair(&self, schedule: &HashMap<String,HashMap<i8, String>>, operator_index: &i32) -> HashMap<String, HashMap<i8, String>> {
 
-        schedule
+        schedule.to_owned()
     }
 
 
     pub fn run_iteration(&mut self){
         let mut current_solution = self.initial_solution();
         self.solution = current_solution.clone();
-        for iter_num in 1..= self.max_iteration{
-            let operator_index = self.routeWheel(&iter_num);
-            let next_solution = self.shake_and_repair(&current_solution, operator_index);
-            current_solution = self.simulate_annealing(&current_solution, &next_solution);
-            if (calculate.totalScore(&current_solution) > calculate.totalScore(&self.solution)){
-                this.solution = current_solution.clone()
-            }
-        }
+        //for iter_num in 1..= self.max_iteration{
+        //    let operator_index = self.routeWheel(&iter_num);
+        //    let next_solution = self.shake_and_repair(&current_solution, operator_index);
+        //    current_solution = self.simulate_annealing(&current_solution, &next_solution);
+        //    if (calculate.totalScore(&current_solution) > calculate.totalScore(&self.solution)){
+        //        this.solution = current_solution.clone()
+        //    }
+        //}
         self.print_solution();
     }
 
     pub fn print_solution(&self){
         println!("[solution]");
-        for (key, value) in *&self.solution {
+        for (key, value) in &self.solution.clone(){
             println!("{}: {:?}", key, value);
         }
     }

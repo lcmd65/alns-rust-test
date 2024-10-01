@@ -16,7 +16,7 @@ fn main() {
         .expect("Failed to read input data from JSON file");
 
     println!("[validate_input_data]");
-    let alns = Alns::init(input_data);
+    let mut alns = Alns::init(input_data);
     alns.run_iteration();
     println!("[end]");
 }
