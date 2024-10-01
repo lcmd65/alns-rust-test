@@ -3,6 +3,7 @@ use crate::coverage::coverage::Coverage;
 use crate::input::input::InputData;
 use crate::utils::random;
 use std::hash::Hash;
+use crate::utils::to_excel;
 use std::ptr::null;
 use rand::random;
 use crate::engine::cost::Score;
@@ -233,6 +234,7 @@ impl Alns {
     }
 
     pub fn print_solution(&self){
+        to_excel::write_hashmap_to_excel(&self.solution.clone(),"src/output/output.xlsx");
         println!("[solution]");
         for (key, value) in &self.solution.clone(){
             println!("{}: {:?}", key, value);

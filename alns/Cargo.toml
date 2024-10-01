@@ -14,3 +14,4 @@ jsonwebtoken = "9.3.0"
 tokio = { version = "1.37.0", features = ["full"] }
 
 rand = "0.8"
+xlsxwriter = "0.6.1"
