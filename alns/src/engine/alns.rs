@@ -194,13 +194,13 @@ impl Alns {
 
     pub fn run_iteration(&mut self){
         let mut current_solution = self.initial_solution();
-        self.solution = current_solution;
+        self.solution = current_solution.clone();
         for iter_num in 1..= self.max_iteration{
             let operator_index = self.routeWheel(&iter_num);
             let next_solution = self.shake_and_repair(&current_solution, operator_index);
-            current_solution = self.simulate_annealing(&current_solution, &next_solution)
-            if (calculate.totalScore(current_solution) > calculate.totalScore(this.bestSolution)){
-                this.bestSolution = deepCopySolution(current_solution)
+            current_solution = self.simulate_annealing(&current_solution, &next_solution);
+            if (calculate.totalScore(&current_solution) > calculate.totalScore(&self.solution)){
+                this.solution = current_solution.clone()
             }
         }
         self.print_solution();
@@ -208,7 +208,7 @@ impl Alns {
 
     pub fn print_solution(&self){
         println!("[solution]");
-        for (key, value) in &self.solution {
+        for (key, value) in *&self.solution {
             println!("{}: {:?}", key, value);
         }
     }
