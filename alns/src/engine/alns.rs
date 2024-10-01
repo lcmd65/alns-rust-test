@@ -196,8 +196,8 @@ impl Alns {
             self.update_weight()
         }
 
-        let rand: f32 = random();;
-        let mut sum =0.0;
+        let rand: f32 = random();
+        let mut sum = 0.0;
 
         for index in 0.. self.operator_weight.len(){
             sum += &self.operator_weight[index];
