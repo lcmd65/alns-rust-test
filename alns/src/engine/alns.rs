@@ -74,6 +74,26 @@ impl Alns {
             }
         }
 
+        for staff in &self.input.staffs {
+            for week in 1..= self.input.schedule_period{
+                for day in 0..=6{
+                    if self.is_a_day(&initial_solution, &staff.id, &day + 7 * (&week - 1), ""){
+                        let mut random_shift = random::random_choice(&self.input.shifts);
+
+                        while(*&random_shift.id == "DO".to_string()
+                            || *&random_shift.id == "PH".to_string()
+                        ) {
+                            random_shift = random::random_choice(&self.input.shifts);
+                        }
+
+                        if let Some(inner_map) = initial_solution.get_mut(&staff.id) {
+                            inner_map.insert(&day + 7 * (&week - 1), random_shift.id.to_string());
+                        }
+                    }
+                }
+            }
+        }
+
         self.adjust_for_public_holiday(initial_solution)
     }
 
