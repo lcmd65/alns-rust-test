@@ -49,7 +49,7 @@ impl Alns {
             let staff_id = &staff.id;
             let mut inner_map: HashMap<i8, String> = HashMap::new();
 
-            for index in 0..self.input.schedule_period * 7 {
+            for index in 0.. &self.input.schedule_period * 7 {
                 if (index + 1) % 7 == 0 {
                     inner_map.insert(index, "DO".to_string());
                 } else {
@@ -61,12 +61,12 @@ impl Alns {
         }
 
         for staff in &self.input.staffs {
-            for index in 0..self.input.schedule_period * 7 {
+            for index in 0..& self.input.schedule_period * 7 {
                 if (initial_solution[&staff.id][&index] != "DO".to_string()) {
                     for coverage in &self.input.coverages {
                         if coverage.desire_value > self.coverage_calculate(index, &coverage, &initial_solution) {
                             if let Some(inner_map) = initial_solution.get_mut(&staff.id) {
-                                inner_map.insert(index as i8, coverage.shift_random());
+                                inner_map.insert(index, coverage.shift_random());
                             }
                         }
                     }
