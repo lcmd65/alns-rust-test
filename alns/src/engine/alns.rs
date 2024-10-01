@@ -173,6 +173,7 @@ impl Alns {
                 for day in 0..=6{
                     if self.is_a_day(*&schedule, &staff.id, &day + 7 * (&week - 1), ""){
 
+
                     }
                 }
             }
