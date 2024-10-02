@@ -168,7 +168,11 @@ impl<'a> Alns<'a> {
         for staff in &self.input.staffs {
             let all_staff_groups = &self.input.staff_groups;
 
-            if all_staff_groups.iter().filter(|x| x.id == "OPH").any(|x| x.staff_list.contains(&staff.id)) {
+            if all_staff_groups
+                .iter()
+                .filter(|x| x.id == "OPH")
+                .any(|x| x.staff_list.contains(&staff.id))
+            {
                 let mut current_month = self.input.start_date.month;
                 let mut total_processing_day = 0;
                 let mut current_day = self.input.start_date.day;
@@ -189,7 +193,10 @@ impl<'a> Alns<'a> {
                         }
                     }
 
-                    if self.input.public_holidays.iter().any(|x| x.day == current_day && x.month == current_month) {
+                    if self.input.public_holidays
+                        .iter()
+                        .any(|x| x.day == current_day && x.month == current_month)
+                    {
                         if let Some(inner_map) = schedule.get_mut(&staff.id) {
                             inner_map.insert(total_processing_day, "PH".to_string());
                         }
@@ -265,7 +272,11 @@ impl<'a> Alns<'a> {
         let mut random_key = *random::random_choice(&vec![0, 1, 2, 3, 4, 5, 6]);
         let mut random_week = random::random_choice_from_range(1usize, *&self.input.schedule_period as usize);
         let mut random_staff = random::random_choice(&self.input.staffs);
-        while !self.is_violation_core_day(&schedule, &random_staff.id, (&random_key + 7 * (&random_week - 1)) as i8) {
+        while !self.is_violation_core_day(
+            &schedule,
+            &random_staff.id,
+            (&random_key + 7 * (&random_week - 1)) as i8
+        ) {
             random_key = *random::random_choice(&vec![0,1,2,3,4,5,6]);
             random_week = random::random_choice_from_range(1usize, *&self.input.schedule_period as usize);
             random_staff = random::random_choice(&self.input.staffs);
@@ -341,7 +352,6 @@ impl<'a> Alns<'a> {
                 }
             }
         }
-
 
         schedule.clone()
     }
