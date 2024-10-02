@@ -118,11 +118,11 @@ impl<'a> Alns<'a> {
     }
 
     fn is_violation_core_day(&self, schedule: &HashMap<String, HashMap<i8, String>>, staff: &String, index: i8) -> bool{
-        if schedule[staff].get(&index).unwrap().as_str() == "DO"|| schedule[staff].get(&index).unwrap().as_str() =="PH" {
-            return true
+        if schedule[staff].get(&index).unwrap().as_str() =="PH" {
+            return false
         };
 
-        false
+        true
     }
 
     fn is_a_day(&self, schedule: &HashMap<String, HashMap<i8, String>>, staff: &String, index: i8, shift_information: String) -> bool{
@@ -222,57 +222,39 @@ impl<'a> Alns<'a> {
         choose_value
     }
 
-    fn random_destroy_solution(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
+    fn random_swap_staff_shift(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
 
         let mut random_key = *random::random_choice(&vec![0, 1, 2, 3, 4, 5, 6]);
         let mut random_week = random::random_choice_from_range(1usize, *&self.input.schedule_period as usize);
         let mut random_staff = random::random_choice(&self.input.staffs);
-        while !self.is_violation_core_day(*&schedule, &random_staff.id, (&random_key + 7 * (&random_week - 1)) as i8) {
+        while !self.is_violation_core_day(&schedule, &random_staff.id, (&random_key + 7 * (&random_week - 1)) as i8) {
             random_key = *random::random_choice(&vec![0,1,2,3,4,5,6]);
             random_week = random::random_choice_from_range(1usize, *&self.input.schedule_period as usize);
             random_staff = random::random_choice(&self.input.staffs);
         }
 
-        if let Some(inner_map) = schedule.get_mut(&random_staff.id){
-            inner_map.insert(((random_key + 7 * (random_week - 1)) as i8), "".to_string());
-        }
-        schedule.to_owned()
-    }
-
-    fn repair_solution(&self, mut schedule: HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
-
-        for staff in &self.input.staffs {
-            for week in 1..= self.input.schedule_period{
-                for day in 0..=6{
-                    if self.is_a_day(&schedule, &staff.id, &day + 7 * (&week - 1), "".to_string()){
-                        let mut random_shift = random::random_choice(&self.input.shifts);
-                        if staff.work_days == 5.5 {
-                            while(*&random_shift.id == "M2".to_string()
-                                || *&random_shift.id == "A2".to_string()
-                                || *&random_shift.id == "PH".to_string()
-                            ) {
-                                random_shift = random::random_choice(&self.input.shifts);
-                            }
-                        }
-                        else{
-                            let mut random_shift = random::random_choice(&self.input.shifts);
-
-                            while(*&random_shift.id == "M3".to_string()
-                                || *&random_shift.id == "PH".to_string()
-                            ) {
-                                random_shift = random::random_choice(&self.input.shifts);
-                            }
-                        }
-
-                        if let Some(inner_map) = schedule.get_mut(&staff.id) {
-                            inner_map.insert(&day + 7 * (&week - 1), random_shift.id.to_string());
-                        }
-                    }
-                }
+        let mut random_shift = random::random_choice(&self.input.shifts);
+        if random_staff.work_days == 5.5 {
+            while(random_shift.id == "M2".to_string()
+                || random_shift.id == "A2".to_string()
+                || random_shift.id == "PH".to_string()
+            ) {
+                random_shift = random::random_choice(&self.input.shifts);
             }
-
         }
-        schedule.to_owned()
+        else {
+
+            while(random_shift.id == "M3".to_string()
+                || random_shift.id == "PH".to_string()
+            ) {
+                random_shift = random::random_choice(&self.input.shifts);
+            }
+        }
+
+        if let Some(inner_map) = schedule.get_mut(&random_staff.id){
+            inner_map.insert(((random_key + 7 * (random_week - 1)) as i8), random_shift.id.to_string());
+        }
+        schedule.clone()
     }
 
     fn simulate_annealing(&mut self, schedule: &mut HashMap<String, HashMap<i8, String>>, next_schedule: &HashMap<String,HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
@@ -295,14 +277,6 @@ impl<'a> Alns<'a> {
 
         schedule.clone()
     }
-
-    fn  random_swap_staff_shift(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
-        let mut next_schedule = self.random_destroy_solution(schedule);
-        next_schedule = self.repair_solution(next_schedule);
-
-        next_schedule
-    }
-
     fn greedy_coverage_enhancement(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
         let mut next_schedule = schedule.clone();
 
@@ -336,6 +310,7 @@ impl<'a> Alns<'a> {
             let operator_index = self.route_wheel(iter_num);
             println!(" choose {}", &operator_index);
             self.operator_time[operator_index as usize] += 1.0;
+
             let next_solution = self.shake_and_repair(&mut current_solution, operator_index);
             current_solution = self.simulate_annealing(&mut current_solution, &next_solution);
 
