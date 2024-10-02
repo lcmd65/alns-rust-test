@@ -23,8 +23,12 @@ impl<'a> Rule<'a> {
     }
 
 
-    pub fn calculate_number_coverage_fulfill(&self, coverage: &Coverage, week: &i8, schedule: &HashMap<String, HashMap<i8, String>>) -> i8
-    {
+    pub fn calculate_number_coverage_fulfill(
+        &self,
+        coverage: &Coverage,
+        week: &i8,
+        schedule: &HashMap<String, HashMap<i8, String>>
+    ) -> i8 {
         let mut num_violation = 0;
 
         for staff_group_id in &coverage.staff_groups {
@@ -40,7 +44,12 @@ impl<'a> Rule<'a> {
         num_violation
     }
 
-    pub fn calculate_number_coverage_violation(&self, coverage: &Coverage, week: &i8, schedule: &HashMap<String, HashMap<i8, String>>) -> i8{
+    pub fn calculate_number_coverage_violation(
+        &self,
+        coverage: &Coverage,
+        week: &i8,
+        schedule: &HashMap<String, HashMap<i8, String>>
+    ) -> i8{
         let coverage_fulfill = self.calculate_number_coverage_fulfill(&coverage, &week, schedule);
 
         if coverage.types.contains(&"at least".to_string()) {
@@ -56,7 +65,12 @@ impl<'a> Rule<'a> {
         -1
     }
 
-    pub fn calculate_number_horizontal_coverage_fulfill(&self, coverage: &HorizontalCoverage, week: &i8, schedule: &HashMap<String, HashMap<i8, String>>) -> HashMap<String, i8>{
+    pub fn calculate_number_horizontal_coverage_fulfill(
+        &self,
+        coverage: &HorizontalCoverage,
+        week: &i8,
+        schedule: &HashMap<String, HashMap<i8, String>>
+    ) -> HashMap<String, i8>{
         let mut num_coverage : HashMap<String, i8> = HashMap::new();
 
         if coverage.staffs.contains(&"all_staffs".to_string()){
@@ -74,7 +88,12 @@ impl<'a> Rule<'a> {
        num_coverage
     }
 
-    pub fn calculate_number_horizontal_coverage_violation(&self, coverage: &HorizontalCoverage, week: &i8, schedule: &HashMap<String, HashMap<i8, String>>) -> i8{
+    pub fn calculate_number_horizontal_coverage_violation(
+        &self,
+        coverage: &HorizontalCoverage,
+        week: &i8,
+        schedule: &HashMap<String, HashMap<i8, String>>
+    ) -> i8{
         let mut num_coverage = self.calculate_number_horizontal_coverage_fulfill(&coverage, &week, schedule);
         let mut num_violation = 0;
 

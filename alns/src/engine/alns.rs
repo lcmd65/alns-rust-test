@@ -31,7 +31,7 @@ impl<'a> Alns<'a> {
         let alns = Self {
             max_iteration: 1000,
             delta_e: 0.0,
-            limit: 0.005,
+            limit: 1e-100,
             alpha: 0.95,
             temperature: 100.0,
             operator_score: [0.2; 5],
@@ -69,8 +69,8 @@ impl<'a> Alns<'a> {
     }
 
     fn initial_solution(&self) -> HashMap<String, HashMap<i8, String>> {
-        let mut initial_solution: HashMap<String, HashMap<i8, String>> = HashMap::new();
 
+        let mut initial_solution: HashMap<String, HashMap<i8, String>> = HashMap::new();
         for staff in &self.input.staffs {
             let staff_id = &staff.id;
             let mut inner_map: HashMap<i8, String> = HashMap::new();
@@ -87,7 +87,7 @@ impl<'a> Alns<'a> {
         }
 
         for staff in &self.input.staffs {
-            for index in 0..& self.input.schedule_period * 7 {
+            for index in 0..&self.input.schedule_period * 7 {
                 if (initial_solution[&staff.id][&index] != "DO".to_string()) {
                     for coverage in &self.input.coverages {
                         if coverage.desire_value >
@@ -137,11 +137,24 @@ impl<'a> Alns<'a> {
         schedule: &HashMap<String, HashMap<i8, String>>,
         staff: &String, index: i8
     ) -> bool{
-        if schedule[staff].get(&index).unwrap().as_str() =="PH" {
+        if schedule[staff].get(&index).unwrap().as_str() =="PH" ||
+            schedule[staff].get(&index).unwrap().as_str() == "DO" {
             return false
         };
 
         true
+    }
+
+    fn is_violation_public_holiday(
+        &self,
+        schedule: &HashMap<String, HashMap<i8, String>>,
+        staff: &String, index: i8
+    ) -> bool{
+        if schedule[staff].get(&index).unwrap().as_str() == "PH"  {
+            return true;
+        };
+
+        false
     }
 
     fn is_a_day(
@@ -268,7 +281,6 @@ impl<'a> Alns<'a> {
         &self,
         schedule: &mut HashMap<String, HashMap<i8, String>>
     ) -> HashMap<String, HashMap<i8, String>> {
-
         let mut random_key = *random::random_choice(&vec![0, 1, 2, 3, 4, 5, 6]);
         let mut random_week = random::random_choice_from_range(1usize, *&self.input.schedule_period as usize);
         let mut random_staff = random::random_choice(&self.input.staffs);
@@ -329,6 +341,7 @@ impl<'a> Alns<'a> {
 
         schedule.clone()
     }
+
     fn greedy_coverage_enhancement(
         &self,
         schedule: &mut HashMap<String, HashMap<i8, String>>
@@ -363,22 +376,54 @@ impl<'a> Alns<'a> {
         let mut next_schedule: HashMap<String, HashMap<i8, String>> = HashMap::new();
         for horizontal_coverage in &self.input.horizontal_coverages {
             for staff in &self.input.staffs {
-                    for week in 1..self.input.schedule_period {
-                        for day in horizontal_coverage.days.clone() {
-                            for shift in horizontal_coverage.shifts.clone() {
-                                next_schedule = schedule.clone();
-                                if let Some(inner_map) = next_schedule.get_mut(&staff.id.clone()) {
-                                    inner_map.insert((&day - 1 + 7 * (week - 1)), shift);
+                for week in 1..self.input.schedule_period {
+                    for day in horizontal_coverage.days.clone() {
+                        for shift in horizontal_coverage.shifts.clone() {
+                            next_schedule = schedule.clone();
+                            if let Some(inner_map) = next_schedule.get_mut(&staff.id.clone()) {
+                                inner_map.insert((&day - 1 + 7 * (week - 1)), shift);
+                            }
+                            if self.score.calculate_horizontal_coverage_score(schedule) < self.score.calculate_horizontal_coverage_score(&next_schedule) {
+                                return next_schedule.clone()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        schedule.clone()
+    }
+
+    fn greedy_swap_staff_shift_enhancement(
+        &self,
+        schedule: &mut HashMap<String, HashMap<i8, String>>
+    )-> HashMap<String, HashMap<i8, String>> {
+        for staff in &self.input.staffs{
+            for week in 1..= *&self.input.schedule_period{
+                for day in 0.. 6{
+                    if !self.is_violation_public_holiday(&schedule, &staff.id, *&day + 7*(&week - 1)) {
+                        for day_next in (&day.clone() + 1)..=6 {
+                            if !self.is_violation_public_holiday(&schedule, &staff.id, *&day_next + 7 * (&week - 1)){
+
+                                let mut next_schedule = schedule.clone();
+                                let temp_shift = schedule[&staff.id.clone()][&(&day + 7 * (&week - 1))].clone();
+                                print!("{}", temp_shift);
+
+                                if let Some(inner_map) = next_schedule.get_mut(&staff.id) {
+                                    inner_map.insert(&day + 7 * (week - 1), inner_map.get(&(&day_next + 7 * (&week - 1))).unwrap().to_string());
+                                    inner_map.insert(day_next, temp_shift);
                                 }
-                                if self.score.calculate_horizontal_coverage_score(schedule) < self.score.calculate_horizontal_coverage_score(&next_schedule) {
-                                    return next_schedule.clone()
+
+                                if self.score.calculate_total_score(&schedule) < self.score.calculate_total_score(&next_schedule) {
+                                    return next_schedule;
                                 }
                             }
                         }
                     }
+                }
             }
         }
-
 
         schedule.clone()
     }
@@ -391,8 +436,8 @@ impl<'a> Alns<'a> {
             0 => self.random_swap_staff_shift(schedule),
             1 => self.greedy_coverage_enhancement(schedule),
             2 => self.greedy_horizontal_coverage_enhancement(schedule),
-            3 => self.greedy_coverage_enhancement(schedule),
-            4 => self.greedy_coverage_enhancement(schedule),
+            3 => self.greedy_swap_staff_shift_enhancement(schedule),
+            4 => self.greedy_swap_staff_shift_enhancement(schedule),
             _ => schedule.clone()
         };
 
@@ -413,6 +458,7 @@ impl<'a> Alns<'a> {
                 self.solution = current_solution.clone()
             }
         }
+
         self.print_solution();
     }
 
@@ -432,5 +478,4 @@ impl<'a> Alns<'a> {
         println!("[constraint score]: {}", score_constraint);
         println!("[pattern-constraint score]: {}", score_pattern_constraint);
     }
-
 }
