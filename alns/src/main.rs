@@ -9,14 +9,14 @@ mod shift;
 mod solution;
 mod utils;
 mod constraint;
-
+mod violation;
 
 fn main() {
     let input_data = json::read_input_data_from_file("src/resource/dump/data_dummy.json")
         .expect("Failed to read input data from JSON file");
 
     println!("[validate_input_data]");
-    let mut alns = Alns::init(input_data);
+    let mut alns = Alns::new(&input_data);
     alns.run_iteration();
     println!("[end]");
 }

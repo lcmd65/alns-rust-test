@@ -10,7 +10,7 @@ use rand::{random, thread_rng, Rng};
 use crate::engine::cost::Score;
 use crate::staff::staff::Staff;
 
-pub struct Alns {
+pub struct Alns<'a> {
     max_iteration: i32,
     delta_e: f32,
     alpha: f32,
@@ -21,14 +21,14 @@ pub struct Alns {
     operator_time: [f32; 5],
     operator_probabilities: [f32; 5],
     solution: HashMap<String,HashMap<i8,String>>,
-    input: InputData,
-    score: Score
+    input: &'a InputData,
+    score: Score<'a>
 }
 
-impl Alns {
+impl<'a> Alns<'a> {
 
-    pub fn init(input_data: InputData) -> Self {
-        Self {
+    pub fn new(input_data: &'a InputData) -> Self {
+        let alns = Self {
             max_iteration: 1000,
             delta_e: 0.0,
             limit: 0.005,
@@ -39,9 +39,10 @@ impl Alns {
             operator_time: [0.0; 5],
             operator_probabilities: [0.0; 5],
             solution: HashMap::new(),
-            input: input_data,
-            score: Score::init()
-        }
+            score: Score::new(&input_data),
+            input: &input_data
+        };
+        alns
     }
 
     fn update_weight(&mut self){
@@ -96,7 +97,7 @@ impl Alns {
         for staff in &self.input.staffs {
             for week in 1..= self.input.schedule_period{
                 for day in 0..=6{
-                    if self.is_a_day(&initial_solution, &staff.id, &day + 7 * (&week - 1), ""){
+                    if self.is_a_day(&initial_solution, &staff.id, &day + 7 * (&week - 1), "".to_string()){
                         let mut random_shift = random::random_choice(&self.input.shifts);
 
                         while(*&random_shift.id == "DO".to_string()
@@ -117,21 +118,19 @@ impl Alns {
     }
 
     fn is_violation_core_day(&self, schedule: &HashMap<String, HashMap<i8, String>>, staff: &String, index: i8) -> bool{
-        let bool_value = match schedule[staff].get(&index).unwrap().as_str() {
-            "DO"| "PH" => true,
-            _ => false
+        if schedule[staff].get(&index).unwrap().as_str() == "DO"|| schedule[staff].get(&index).unwrap().as_str() =="PH" {
+            return true
         };
 
-        bool_value
+        false
     }
 
-    fn is_a_day(&self, schedule: &HashMap<String, HashMap<i8, String>>, staff: &String, index: i8, shift_information: &str) -> bool{
-        let bool_value = match schedule[staff].get(&index).unwrap().as_str() {
-            shift_information => true,
-            _ => false
-        };
+    fn is_a_day(&self, schedule: &HashMap<String, HashMap<i8, String>>, staff: &String, index: i8, shift_information: String) -> bool{
+        if schedule[staff].get(&index).unwrap().to_string() == shift_information {
+            return true;
+        }
 
-        bool_value
+        false
     }
 
     fn is_leap_year()->bool{
@@ -176,7 +175,6 @@ impl Alns {
         }
         schedule
     }
-
 
     fn coverage_calculate(&self, day: i8, coverage: &Coverage, schedule: &HashMap<String, HashMap<i8, String>>) -> i8 {
         let mut number_coverage_fulfill  = 0;
@@ -241,12 +239,12 @@ impl Alns {
         schedule.to_owned()
     }
 
-    fn repair_solution(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
+    fn repair_solution(&self, mut schedule: HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
 
         for staff in &self.input.staffs {
             for week in 1..= self.input.schedule_period{
                 for day in 0..=6{
-                    if self.is_a_day(*&schedule, &staff.id, &day + 7 * (&week - 1), ""){
+                    if self.is_a_day(&schedule, &staff.id, &day + 7 * (&week - 1), "".to_string()){
                         let mut random_shift = random::random_choice(&self.input.shifts);
                         if staff.work_days == 5.5 {
                             while(*&random_shift.id == "M2".to_string()
@@ -277,8 +275,8 @@ impl Alns {
         schedule.to_owned()
     }
 
-    fn simulate_annealing(&mut self, schedule: &HashMap<String,HashMap<i8, String>>, next_schedule: &HashMap<String,HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
-        self.delta_e = &self.score.calculate_total_score(&self.input, &schedule) - &self.score.calculate_total_score(&self.input, &next_schedule);
+    fn simulate_annealing(&mut self, schedule: &mut HashMap<String, HashMap<i8, String>>, next_schedule: &HashMap<String,HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
+        self.delta_e = &self.score.calculate_total_score(schedule) - &self.score.calculate_total_score(schedule);
         if (self.delta_e < 0.0){
             return next_schedule.clone()
         }
@@ -290,7 +288,7 @@ impl Alns {
             let acceptance_variable = random::random_choice_from_range_double(0.0, 1.0);
 
             self.temperature *= self.alpha;
-            if (probability < acceptance_variable as f32) {
+            if (probability < acceptance_variable) {
                 return next_schedule.clone()
             }
         }
@@ -300,7 +298,17 @@ impl Alns {
 
     fn  random_swap_staff_shift(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
         let mut next_schedule = self.random_destroy_solution(schedule);
-        next_schedule = self.repair_solution(schedule);
+        next_schedule = self.repair_solution(next_schedule);
+
+        next_schedule
+    }
+
+    fn greedy_coverage_enhancement(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
+        let mut next_schedule = schedule.clone();
+
+        for coverage in &self.input.coverages{
+
+        }
 
         next_schedule
     }
@@ -323,11 +331,15 @@ impl Alns {
         let mut current_solution = self.initial_solution();
         self.solution = current_solution.clone();
         for iter_num in 1..= self.max_iteration{
+            println!("{}", &iter_num);
+
             let operator_index = self.route_wheel(iter_num);
+            println!(" choose {}", &operator_index);
             self.operator_time[operator_index as usize] += 1.0;
             let next_solution = self.shake_and_repair(&mut current_solution, operator_index);
-            current_solution = self.simulate_annealing(&current_solution, &next_solution);
-            if (self.score.calculate_total_score(&self.input, &current_solution) > self.score.calculate_total_score(&self.input, &self.solution)){
+            current_solution = self.simulate_annealing(&mut current_solution, &next_solution);
+
+            if (self.score.calculate_total_score(&mut current_solution) > self.score.calculate_total_score( &mut self.solution)){
                 self.solution = current_solution.clone()
             }
         }

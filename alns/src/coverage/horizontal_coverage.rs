@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct HorizontalCoverage {
     pub (crate) id: String,
     pub (crate) shifts: Vec<String>,
+    pub (crate) staffs: Vec<String>,
     pub (crate) days: Vec<i8>,
     pub (crate) types: Vec<String>,
     pub (crate) desire_value: i8,
