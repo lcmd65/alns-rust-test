@@ -31,7 +31,10 @@ impl<'a> Score<'a> {
     }
 
 
-    pub(crate) fn  calculate_horizontal_coverage_score(&self , schedule: &HashMap<String,HashMap<i8, String>>) -> f32{
+    pub(crate) fn  calculate_horizontal_coverage_score(
+        &self ,
+        schedule: &HashMap<String,HashMap<i8, String>>
+    ) -> f32 {
         let mut score = 0.0;
 
         for week in 1..= self.input.schedule_period {
@@ -44,7 +47,10 @@ impl<'a> Score<'a> {
         -score
     }
 
-    pub(crate) fn  calculate_coverage_score(&self, schedule: &HashMap<String, HashMap<i8, String>>) -> f32{
+    pub(crate) fn  calculate_coverage_score(
+        &self,
+        schedule: &HashMap<String, HashMap<i8, String>>
+    ) -> f32{
         let mut score = 0.0;
 
         for week in 1..= self.input.schedule_period {

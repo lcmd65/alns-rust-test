@@ -117,7 +117,11 @@ impl<'a> Alns<'a> {
         self.adjust_for_public_holiday(initial_solution)
     }
 
-    fn is_violation_core_day(&self, schedule: &HashMap<String, HashMap<i8, String>>, staff: &String, index: i8) -> bool{
+    fn is_violation_core_day(
+        &self,
+        schedule: &HashMap<String, HashMap<i8, String>>,
+        staff: &String, index: i8
+    ) -> bool{
         if schedule[staff].get(&index).unwrap().as_str() =="PH" {
             return false
         };
@@ -125,7 +129,12 @@ impl<'a> Alns<'a> {
         true
     }
 
-    fn is_a_day(&self, schedule: &HashMap<String, HashMap<i8, String>>, staff: &String, index: i8, shift_information: String) -> bool{
+    fn is_a_day(
+        &self,
+        schedule: &HashMap<String, HashMap<i8, String>>,
+        staff: &String, index: i8,
+        shift_information: String
+    ) -> bool{
         if schedule[staff].get(&index).unwrap().to_string() == shift_information {
             return true;
         }
@@ -137,7 +146,10 @@ impl<'a> Alns<'a> {
         false
     }
 
-    fn adjust_for_public_holiday(&self, mut schedule: HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
+    fn adjust_for_public_holiday(
+        &self,
+        mut schedule: HashMap<String, HashMap<i8, String>>
+    ) -> HashMap<String, HashMap<i8, String>> {
         for staff in &self.input.staffs {
             let all_staff_groups = &self.input.staff_groups;
 
@@ -176,7 +188,12 @@ impl<'a> Alns<'a> {
         schedule
     }
 
-    fn coverage_calculate(&self, day: i8, coverage: &Coverage, schedule: &HashMap<String, HashMap<i8, String>>) -> i8 {
+    fn coverage_calculate(
+        &self,
+        day: i8,
+        coverage: &Coverage,
+        schedule: &HashMap<String, HashMap<i8, String>>
+    ) -> i8 {
         let mut number_coverage_fulfill  = 0;
         for staff in &self.input.staffs {
             if coverage.shift.contains(&schedule[&staff.id][&day]) {
@@ -186,7 +203,10 @@ impl<'a> Alns<'a> {
         number_coverage_fulfill
     }
 
-    fn route_wheel(&mut self, iter: i32) -> i8{
+    fn route_wheel(
+        &mut self,
+        iter: i32
+    ) -> i8{
         if (iter % 400 == 0){
             self.reset_weight()
         }
@@ -222,7 +242,10 @@ impl<'a> Alns<'a> {
         choose_value
     }
 
-    fn random_swap_staff_shift(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
+    fn random_swap_staff_shift(
+        &self,
+        schedule: &mut HashMap<String, HashMap<i8, String>>
+    ) -> HashMap<String, HashMap<i8, String>> {
 
         let mut random_key = *random::random_choice(&vec![0, 1, 2, 3, 4, 5, 6]);
         let mut random_week = random::random_choice_from_range(1usize, *&self.input.schedule_period as usize);
@@ -256,7 +279,11 @@ impl<'a> Alns<'a> {
         schedule.clone()
     }
 
-    fn simulate_annealing(&mut self, schedule: &mut HashMap<String, HashMap<i8, String>>, next_schedule: &HashMap<String,HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
+    fn simulate_annealing(
+        &mut self,
+        schedule: &mut HashMap<String, HashMap<i8, String>>,
+        next_schedule: &HashMap<String,HashMap<i8, String>>
+    ) -> HashMap<String, HashMap<i8, String>> {
         self.delta_e = &self.score.calculate_total_score(schedule) - &self.score.calculate_total_score(schedule);
         if (self.delta_e < 0.0){
             return next_schedule.clone()
@@ -276,7 +303,10 @@ impl<'a> Alns<'a> {
 
         schedule.clone()
     }
-    fn greedy_coverage_enhancement(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
+    fn greedy_coverage_enhancement(
+        &self,
+        schedule: &mut HashMap<String, HashMap<i8, String>>
+    ) -> HashMap<String, HashMap<i8, String>> {
         let mut next_schedule: HashMap<String, HashMap<i8, String>> = HashMap::new();
         for coverage in &self.input.coverages {
             for staff_group_id in &coverage.staff_groups {
@@ -301,7 +331,10 @@ impl<'a> Alns<'a> {
         schedule.clone()
     }
 
-    fn greedy_horizontal_coverage_enhancement(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
+    fn greedy_horizontal_coverage_enhancement(
+        &self,
+        schedule: &mut HashMap<String, HashMap<i8, String>>
+    ) -> HashMap<String, HashMap<i8, String>> {
         let mut next_schedule: HashMap<String, HashMap<i8, String>> = HashMap::new();
         for horizontal_coverage in &self.input.horizontal_coverages {
             for staff in &self.input.staffs {
@@ -325,7 +358,10 @@ impl<'a> Alns<'a> {
         schedule.clone()
     }
 
-    fn shake_and_repair(&self, schedule: &mut HashMap<String,HashMap<i8, String>>, operator_index: i8) -> HashMap<String, HashMap<i8, String>> {
+    fn shake_and_repair(
+        &self,
+        schedule: &mut HashMap<String,HashMap<i8, String>>, operator_index: i8
+    ) -> HashMap<String, HashMap<i8, String>> {
         let result = match operator_index{
             0 => self.random_swap_staff_shift(schedule),
             1 => self.greedy_coverage_enhancement(schedule),
