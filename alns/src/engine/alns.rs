@@ -36,7 +36,7 @@ impl<'a> Alns<'a> {
             temperature: 100.0,
             operator_score: [0.2; 5],
             operator_weight: [0.0; 5],
-            operator_time: [0.0; 5],
+            operator_time: [1.0; 5],
             operator_probabilities: [0.0; 5],
             solution: HashMap::new(),
             score: Score::new(&input_data),
@@ -48,17 +48,17 @@ impl<'a> Alns<'a> {
     fn update_weight(&mut self){
         for index in 0..=4{
             if self.operator_weight[index] == 0.0 {
-                self.operator_weight[index] = 0.2 + 0.8 * &self.operator_score[index] / &self.operator_time[index];
+                self.operator_weight[index] = 0.4 + 0.6 * self.operator_score[index] / self.operator_time[index];
             }
             else {
-                self.operator_weight[index] = 0.2*self.operator_weight[index] + 0.8 * &self.operator_score[index] / &self.operator_time[index];
+                self.operator_weight[index] = 0.4 * self.operator_weight[index] + 0.6 * self.operator_score[index] / self.operator_time[index];
             }
         }
     }
 
     fn reset_weight(&mut self){
         for index in 0..=4{
-            self.operator_weight[index] = 0.0;
+            self.operator_weight[index] = 0.4 + 0.6 * self.operator_score[index] / self.operator_time[index];
         }
     }
 
@@ -243,7 +243,6 @@ impl<'a> Alns<'a> {
             }
         }
         else {
-
             while(random_shift.id == "M3".to_string()
                 || random_shift.id == "PH".to_string()
             ) {
@@ -278,43 +277,78 @@ impl<'a> Alns<'a> {
         schedule.clone()
     }
     fn greedy_coverage_enhancement(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
-        let mut next_schedule = schedule.clone();
-
-        for coverage in &self.input.coverages{
-
+        let mut next_schedule: HashMap<String, HashMap<i8, String>> = HashMap::new();
+        for coverage in &self.input.coverages {
+            for staff_group_id in &coverage.staff_groups {
+                let staff_group = &self.input.staff_groups.iter().find(|&x| x.id == *staff_group_id).unwrap();
+                for staff in &staff_group.staff_list {
+                    for week in 1..self.input.schedule_period {
+                        for shift in coverage.shift.clone() {
+                            next_schedule = schedule.clone();
+                            if let Some(inner_map) = next_schedule.get_mut(&staff.clone()) {
+                                inner_map.insert((&coverage.day - 1 + 7 * (week - 1)), shift);
+                            }
+                            if self.score.calculate_coverage_score(schedule) < self.score.calculate_coverage_score(&next_schedule){
+                                return next_schedule.clone()
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        next_schedule
+
+        schedule.clone()
+    }
+
+    fn greedy_horizontal_coverage_enhancement(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
+        let mut next_schedule: HashMap<String, HashMap<i8, String>> = HashMap::new();
+        for horizontal_coverage in &self.input.horizontal_coverages {
+            for staff in &self.input.staffs {
+                    for week in 1..self.input.schedule_period {
+                        for day in horizontal_coverage.days.clone() {
+                            for shift in horizontal_coverage.shifts.clone() {
+                                next_schedule = schedule.clone();
+                                if let Some(inner_map) = next_schedule.get_mut(&staff.id.clone()) {
+                                    inner_map.insert((&day - 1 + 7 * (week - 1)), shift);
+                                }
+                                if self.score.calculate_horizontal_coverage_score(schedule) < self.score.calculate_horizontal_coverage_score(&next_schedule) {
+                                    return next_schedule.clone()
+                                }
+                            }
+                        }
+                    }
+            }
+        }
+
+
+        schedule.clone()
     }
 
     fn shake_and_repair(&self, schedule: &mut HashMap<String,HashMap<i8, String>>, operator_index: i8) -> HashMap<String, HashMap<i8, String>> {
         let result = match operator_index{
             0 => self.random_swap_staff_shift(schedule),
-            1 => self.random_swap_staff_shift(schedule),
-            2 => self.random_swap_staff_shift(schedule),
-            3 => self.random_swap_staff_shift(schedule),
-            4 => self.random_swap_staff_shift(schedule),
+            1 => self.greedy_coverage_enhancement(schedule),
+            2 => self.greedy_horizontal_coverage_enhancement(schedule),
+            3 => self.greedy_coverage_enhancement(schedule),
+            4 => self.greedy_coverage_enhancement(schedule),
             _ => schedule.clone()
         };
 
         result
     }
 
-
     pub fn run_iteration(&mut self){
         let mut current_solution = self.initial_solution();
         self.solution = current_solution.clone();
         for iter_num in 1..= self.max_iteration{
-            println!("{}", &iter_num);
-
             let operator_index = self.route_wheel(iter_num);
-            println!(" choose {}", &operator_index);
             self.operator_time[operator_index as usize] += 1.0;
 
             let next_solution = self.shake_and_repair(&mut current_solution, operator_index);
             current_solution = self.simulate_annealing(&mut current_solution, &next_solution);
 
-            if (self.score.calculate_total_score(&mut current_solution) > self.score.calculate_total_score( &mut self.solution)){
+            if (self.score.calculate_total_score(&current_solution) > self.score.calculate_total_score( &self.solution)){
                 self.solution = current_solution.clone()
             }
         }
@@ -327,6 +361,15 @@ impl<'a> Alns<'a> {
         for (key, value) in &self.solution.clone(){
             println!("{}: {:?}", key, value);
         }
+
+        let score_coverage = self.score.calculate_coverage_score(&self.solution);
+        let h_score_coverage = self.score.calculate_horizontal_coverage_score(&self.solution);
+        let score_constraint = self.score.calculate_constraint_score(&self.solution);
+        let score_pattern_constraint = self.score.calculate_pattern_constraint_score(&self.solution);
+        println!("[coverage score]: {}", score_coverage);
+        println!("[horizontal coverage score]: {}", h_score_coverage);
+        println!("[constraint score]: {}", score_constraint);
+        println!("[pattern-constraint score]: {}", score_pattern_constraint);
     }
 
 }

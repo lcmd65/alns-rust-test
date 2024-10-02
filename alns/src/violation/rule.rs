@@ -59,7 +59,7 @@ impl<'a> Rule<'a> {
     pub fn calculate_number_horizontal_coverage_fulfill(&self, coverage: &HorizontalCoverage, week: &i8, schedule: &HashMap<String, HashMap<i8, String>>) -> HashMap<String, i8>{
         let mut num_coverage : HashMap<String, i8> = HashMap::new();
 
-        if coverage.staffs.contains(&"all_staff".to_string()){
+        if coverage.staffs.contains(&"all_staffs".to_string()){
             for staff in &self.input.staffs{
                 let mut num_staff = 0;
                 for day in &coverage.days{
