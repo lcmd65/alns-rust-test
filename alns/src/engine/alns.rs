@@ -48,17 +48,23 @@ impl<'a> Alns<'a> {
     fn update_weight(&mut self){
         for index in 0..=4{
             if self.operator_weight[index] == 0.0 {
-                self.operator_weight[index] = 0.4 + 0.6 * self.operator_score[index] / self.operator_time[index];
+                self.operator_weight[index] =
+                    0.4 +
+                    0.6 * self.operator_score[index] / self.operator_time[index];
             }
             else {
-                self.operator_weight[index] = 0.4 * self.operator_weight[index] + 0.6 * self.operator_score[index] / self.operator_time[index];
+                self.operator_weight[index] =
+                    0.4 * self.operator_weight[index] +
+                    0.6 * self.operator_score[index] / self.operator_time[index];
             }
         }
     }
 
     fn reset_weight(&mut self){
         for index in 0..=4{
-            self.operator_weight[index] = 0.4 + 0.6 * self.operator_score[index] / self.operator_time[index];
+            self.operator_weight[index] =
+                0.4 +
+                0.6 * self.operator_score[index] / self.operator_time[index];
         }
     }
 
@@ -84,7 +90,13 @@ impl<'a> Alns<'a> {
             for index in 0..& self.input.schedule_period * 7 {
                 if (initial_solution[&staff.id][&index] != "DO".to_string()) {
                     for coverage in &self.input.coverages {
-                        if coverage.desire_value > self.coverage_calculate(index, &coverage, &initial_solution) {
+                        if coverage.desire_value >
+                            self.coverage_calculate(
+                                index,
+                                &coverage,
+                                &initial_solution
+                            )
+                        {
                             if let Some(inner_map) = initial_solution.get_mut(&staff.id) {
                                 inner_map.insert(index, coverage.shift_random());
                             }
@@ -97,12 +109,15 @@ impl<'a> Alns<'a> {
         for staff in &self.input.staffs {
             for week in 1..= self.input.schedule_period{
                 for day in 0..=6{
-                    if self.is_a_day(&initial_solution, &staff.id, &day + 7 * (&week - 1), "".to_string()){
+                    if self.is_a_day(
+                        &initial_solution,
+                        &staff.id,
+                        &day + 7 * (&week - 1),
+                        "".to_string())
+                    {
                         let mut random_shift = random::random_choice(&self.input.shifts);
 
-                        while(*&random_shift.id == "DO".to_string()
-                            || *&random_shift.id == "PH".to_string()
-                        ) {
+                        while(*&random_shift.id == "DO".to_string() || *&random_shift.id == "PH".to_string()) {
                             random_shift = random::random_choice(&self.input.shifts);
                         }
 
