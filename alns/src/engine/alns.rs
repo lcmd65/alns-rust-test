@@ -132,11 +132,11 @@ impl<'a> Alns<'a> {
         self.adjust_for_public_holiday(initial_solution)
     }
 
-
     fn adjust_for_public_holiday(
         &self,
         mut schedule: HashMap<String, HashMap<i8, String>>
-    ) -> HashMap<String, HashMap<i8, String>> {
+    ) -> HashMap<String, HashMap<i8, String>>
+    {
         for staff in &self.input.staffs {
             let all_staff_groups = &self.input.staff_groups;
 
@@ -187,7 +187,8 @@ impl<'a> Alns<'a> {
         day: i8,
         coverage: &Coverage,
         schedule: &HashMap<String, HashMap<i8, String>>
-    ) -> i8 {
+    ) -> i8
+    {
         let mut number_coverage_fulfill  = 0;
         for staff in &self.input.staffs {
             if coverage.shift.contains(&schedule[&staff.id][&day]) {
@@ -200,7 +201,8 @@ impl<'a> Alns<'a> {
     fn route_wheel(
         &mut self,
         iter: i32
-    ) -> i8{
+    ) -> i8
+    {
         if iter % 400 == 0{ self.reset_weight() }
         else { self.update_weight() }
 
@@ -254,8 +256,7 @@ impl<'a> Alns<'a> {
             while ["M2", "A2", "PH"].contains(&&*random_shift.id.to_string()) {
                 random_shift = random::random_choice(&self.input.shifts);
             }
-        }
-        else {
+        } else {
             while["M3", "PH"].contains(&&*random_shift.id.to_string()) {
                 random_shift = random::random_choice(&self.input.shifts);
             }
@@ -272,7 +273,7 @@ impl<'a> Alns<'a> {
         schedule: &HashMap<String, HashMap<i8, String>>,
         next_schedule: &HashMap<String,HashMap<i8, String>>
     ) -> HashMap<String, HashMap<i8, String>> {
-        self.delta_e = &self.score.calculate_total_score(&schedule) - &self.score.calculate_total_score(&schedule);
+        self.delta_e = self.score.calculate_total_score(&schedule) - self.score.calculate_total_score(&next_schedule);
         if (self.delta_e < 0.0){
             return next_schedule.clone()
         }
@@ -376,16 +377,17 @@ impl<'a> Alns<'a> {
 
                                 if let Some(inner_map) = next_schedule.get_mut(&staff.id) {
                                     if let Some(temp_shift) = inner_map.get(&date::convert_to_solution_hashmap_index(&day, &week)).cloned() {
-                                        inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week),
-                                                         inner_map.get(&date::convert_to_solution_hashmap_index(&day_next, &week)).unwrap().clone());
+                                        inner_map.insert(
+                                            date::convert_to_solution_hashmap_index(&day, &week),
+                                            inner_map.get(&date::convert_to_solution_hashmap_index(&day_next, &week))
+                                                .unwrap()
+                                                .clone()
+                                        );
                                         inner_map.insert(date::convert_to_solution_hashmap_index(&day_next, &week), temp_shift);
                                     }
                                 }
 
-                                if self.score.calculate_total_score(&schedule) < self.score.calculate_total_score(&next_schedule) &&
-                                    self.score.calculate_horizontal_coverage_score(&schedule) <= self.score.calculate_horizontal_coverage_score(&next_schedule) &&
-                                    self.score.calculate_coverage_score(&schedule) <= self.score.calculate_coverage_score(&next_schedule)
-                                {
+                                if self.score.calculate_total_score(&schedule) < self.score.calculate_total_score(&next_schedule) {
                                     return next_schedule;
                                 }
                             }
@@ -424,8 +426,9 @@ impl<'a> Alns<'a> {
 
             let next_solution = self.shake_and_repair(&mut current_solution, operator_index);
             current_solution = self.simulate_annealing(&current_solution, &next_solution);
+            println!("{}", self.score.calculate_total_score(&current_solution));
 
-            if (self.score.calculate_total_score(&current_solution) > self.score.calculate_total_score( &self.solution)){
+            if (self.score.calculate_total_score(&current_solution) > self.score.calculate_total_score(&self.solution)){
                 self.solution = current_solution.clone();
             }
         }
