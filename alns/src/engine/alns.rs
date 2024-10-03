@@ -462,8 +462,10 @@ impl<'a> Alns<'a> {
         next_schedule
     }
 
-    fn greedy_fix_constraint_violation(){
+    fn greedy_fix_constraint_violation(schedule: &HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
 
+
+        schedule.clone()
     }
 
     fn adjustment(){
