@@ -74,7 +74,7 @@ impl<'a> Score<'a> {
                 let mut map = self.rule.constraint_violation(&constraint, &week, &schedule);
                 let score_map = self.executor.executor_rust(&constraint.score_formula, &mut map);
                 for (_, value) in score_map {
-                    score += value;
+                    score += (100.0 - value) * constraint.priority as f32;
                 }
             }
         }

@@ -363,7 +363,7 @@ impl<'a> Alns<'a> {
                                     }
                                 }
 
-                                if self.score.calculate_total_score(&schedule) < self.score.calculate_total_score(&next_schedule) {
+                                if self.score.calculate_coverage_score(&schedule) < self.score.calculate_coverage_score(&next_schedule) {
                                     return next_schedule;
                                 }
                             }
