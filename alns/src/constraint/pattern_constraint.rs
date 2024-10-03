@@ -2,6 +2,7 @@ use std::iter::Map;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::hash::Hash;
+use rand::seq::index::IndexVec;
 
 #[derive(Deserialize, Serialize)]
 pub struct PatternConstraint {
@@ -14,9 +15,4 @@ pub struct PatternConstraint {
     pub (crate) exist: bool,
     pub (crate) is_hard: bool,
     pub (crate) penalty: i8,
-    pub (crate) pattern_lists : Vec<HashMap<String, Vec<String>>>
-
 }
-
-
-impl PatternConstraint {}

@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use crate::shift::shift::Shift;
 
 pub fn get_value(
     schedule: &HashMap<String, HashMap<i8, String>>,
@@ -9,6 +10,26 @@ pub fn get_value(
         .and_then(|days_map| days_map.get(&day))
         .cloned()
 }
+
+pub fn get_duration(
+    schedule: &HashMap<String, HashMap<i8, String>>,
+    staff: &str,
+    day: i8,
+    shift_list: &Vec<Shift>
+) -> i8{
+    let shift = schedule.get(staff)
+        .and_then(|days_map| days_map.get(&day))
+        .cloned();
+
+    let duration = shift_list.iter().find(|&x| x.id == shift
+        .clone()
+        .unwrap()
+        .to_string()
+    ).unwrap().duration;
+
+    duration
+}
+
 
 pub fn is_violation_core_day(
     schedule: &HashMap<String, HashMap<i8, String>>,

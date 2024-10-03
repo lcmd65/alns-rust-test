@@ -11,10 +11,4 @@ pub struct Constraint {
     pub (crate) priority: i8,
     pub (crate) to_maximize: bool,
     pub (crate) is_hard: bool,
-    pub (crate) default_value: f32,
-    pub (crate) threshold: f32,
-    pub (crate) step: f32,
-    pub (crate) score: f32,
-    pub (crate) covert_kotlin_flag: bool,
-    pub (crate) mid_search: bool
 }

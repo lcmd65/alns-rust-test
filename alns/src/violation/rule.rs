@@ -2,9 +2,12 @@ use std::cmp::max;
 use std::collections::HashMap;
 use std::thread::sleep;
 use tokio::time::interval;
+use crate::constraint::constraint::Constraint;
 use crate::input::input::InputData;
 use crate::coverage::coverage::Coverage;
 use crate::coverage::horizontal_coverage::HorizontalCoverage;
+use crate::solution::solution;
+use crate::utils::date;
 
 pub struct Rule<'a> {
     hard_violation: HashMap<String, HashMap<i32, i32>>,
@@ -34,7 +37,6 @@ impl<'a> Rule<'a> {
         for staff_group_id in &coverage.staff_groups {
             let staff_group = &self.input.staff_groups.iter().find(|&x| x.id == *staff_group_id).unwrap();
             for staff in &staff_group.staff_list{
-                //schedule[staff].get(&index).unwrap().as_str()
                 if coverage.shift.contains(&schedule[*&staff].get(&(&coverage.day -1 + 7 * (week - 1))).unwrap()) {
                     num_violation += 1;
                 }
@@ -110,5 +112,82 @@ impl<'a> Rule<'a> {
         }
 
         num_violation
+    }
+
+    pub fn calculate_number_staff_time_fulfill(
+        &self,
+        staff: &String,
+        week: &i8,
+        schedule: &HashMap<String, HashMap<i8, String>>
+    )-> f32{
+        let mut time:f32 = 0.0;
+        for day in 0..=6i8 {
+            time += solution::get_duration(&schedule, &staff, date::convert_to_solution_hashmap_index(&day.clone(), &week), &self.input.shifts) as f32;
+        }
+
+        time
+    }
+
+    pub fn calculate_number_staff_day_fulfill(
+        &self,
+        staff: &String,
+        week: &i8,
+        schedule: &HashMap<String, HashMap<i8, String>>
+    ) -> f32{
+        let mut working_day = 0.0;
+        for day in 0..=6{
+            let value = match solution::get_duration(&schedule, &staff, date::convert_to_solution_hashmap_index(&day.clone(), &week), &self.input.shifts) {
+                8|7 => 1.0,
+                4 => 0.5,
+                _ => 0.0
+            };
+
+            working_day  += value;
+        }
+
+        working_day
+    }
+
+    pub fn constraint_violation(
+        &self,
+        constraint: &Constraint,
+        week: &i8,
+        schedule: &HashMap<String, HashMap<i8, String>>
+    )-> HashMap<String, f32>{
+        let mut map= match constraint.id.as_str() {
+            "exactly-staff-working-time" => {
+                let mut temp_map :HashMap<String, f32> = HashMap::new();
+
+                for staff in &self.input.staffs{
+                    temp_map.insert(staff.id.clone(), self.calculate_number_staff_time_fulfill(&staff.id, &week, &schedule));
+                }
+
+                temp_map
+            }
+
+            "archive-0.5-day" =>{
+                let mut temp_map :HashMap<String, f32> = HashMap::new();
+
+                for staff in &self.input.staffs{
+                    temp_map.insert(staff.id.clone(), self.calculate_number_staff_day_fulfill(&staff.id, &week, &schedule));
+                }
+
+                temp_map
+            }
+
+            "un-archive-0.5-day" =>{
+                let mut temp_map :HashMap<String, f32> = HashMap::new();
+
+                for staff in &self.input.staffs{
+                    temp_map.insert(staff.id.clone(), self.calculate_number_staff_day_fulfill(&staff.id, &week, &schedule));
+                }
+
+                temp_map
+            }
+
+            _ => {HashMap::new()}
+        };
+
+        map
     }
 }

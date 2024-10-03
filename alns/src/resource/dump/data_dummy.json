@@ -7,12 +7,12 @@
   },
   "objs": [
   ],
-  "constrains": [
+  "constraints": [
     {
       "id": "exactly-staff-working-time",
       "score_formula": "formula(100.0, 44.0, 10.0, 1,0)",
       "description": "maximize working time of Staff (hours)",
-      "constrain_type": "staffTimeObj",
+      "constraint_type": "staffTimeObj",
       "staff_groups": ["all_staffs"],
       "priority": 9,
       "to_maximize": false,
@@ -22,7 +22,7 @@
       "id": "archive-0.5-day",
       "score_formula": "formula(100.0, 5.5, 200.0, 1.0)",
       "description": "maximize working time of Staff (hours)",
-      "constrain_type": "staffTimeObj",
+      "constraint_type": "staffTimeObj",
       "staff_groups": ["Staff_1", "Staff_3", "Staff_6"],
       "priority": 8,
       "to_maximize": false,
@@ -32,18 +32,18 @@
       "id": "un-archive-0.5-day",
       "score_formula": "formula(100.0, 6.0, 200.0, 1.0)",
       "description": "maximize working time of Staff (hours)",
-      "constrain_type": "staffTimeObj",
+      "constraint_type": "staffTimeObj",
       "staff_groups":  ["Staff_2", "Staff_4", "Staff_5", "Staff_7",  "Staff_8",  "Staff_9"],
       "priority": 7,
       "to_maximize": true,
       "is_hard": true
     }
   ],
-  "pattern_constrains": [
+  "pattern_constraints": [
     {
       "id": "undesired-after-off-day",
       "description": "",
-      "constrain_type": "shiftPattern",
+      "constraint_type": "shiftPattern",
       "shift_patterns": ["DO-A1", "DO-A2", "PH-A1", "PH-A2"],
       "staff_groups": ["all_staffs"],
       "priority": 5,
@@ -54,7 +54,7 @@
     {
       "id": "undesired-afternoon-shift",
       "description": "",
-      "constrain_type": "shiftPattern",
+      "constraint_type": "shiftPattern",
       "shift_patterns": ["A1-A1-A1", "A2-A2-A2", "A2-A1-A1","A1-A2-A1", "A1-A1-A2", "A2-A2-A1","A1-A2-A2", "A2-A1-A2"],
       "staff_groups": ["all_staffs"],
       "priority": 6,
@@ -65,7 +65,7 @@
     {
       "id": "undesired-fixed-shift",
       "description": "",
-      "constrain_type": "shiftPattern",
+      "constraint_type": "shiftPattern",
       "shift_patterns": ["M1-A1", "M1-A2", "M2-A1", "M2-A2", "M3-A1", "M3-A2"],
       "staff_groups": ["FSG"],
       "priority": 4,

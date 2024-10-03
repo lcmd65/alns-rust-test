@@ -2,6 +2,8 @@ use rand::prelude::SliceRandom;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
+use crate::constraint::constraint::Constraint;
+use crate::constraint::pattern_constraint::PatternConstraint;
 use crate::coverage::coverage::Coverage;
 use crate::coverage::horizontal_coverage::HorizontalCoverage;
 use crate::staff::staff::Staff;
@@ -17,6 +19,8 @@ pub struct InputData{
     pub (crate) staff_groups: Vec<StaffGroup>,
     pub (crate) coverages: Vec<Coverage>,
     pub (crate) horizontal_coverages: Vec<HorizontalCoverage>,
+    pub (crate) constraints: Vec<Constraint>,
+    pub (crate) pattern_constraints: Vec<PatternConstraint>,
     pub (crate) shifts: Vec<Shift>,
     pub (crate) shift_groups: Vec<ShiftGroup>,
     pub (crate) start_date: Date,

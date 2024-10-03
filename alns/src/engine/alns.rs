@@ -29,12 +29,12 @@ impl<'a> Alns<'a> {
 
     pub fn new(input_data: &'a InputData) -> Self {
         let alns = Self {
-            max_iteration: 1000,
+            max_iteration: 100,
             delta_e: 0.0,
             limit: 1e-100,
             alpha: 0.95,
             temperature: 100.0,
-            operator_score: [0.1, 0.1, 0.1, 0.5, 0.2],
+            operator_score: [0.2; 5],
             operator_weight: [0.0; 5],
             operator_time: [1.0; 5],
             operator_probabilities: [0.0; 5],
@@ -265,30 +265,6 @@ impl<'a> Alns<'a> {
         if let Some(inner_map) = schedule.get_mut(&random_staff.id){
             inner_map.insert(((random_key + 7 * (random_week - 1)) as i8), random_shift.id.to_string());
         }
-        schedule.clone()
-    }
-
-    fn simulate_annealing(
-        &mut self,
-        schedule: &HashMap<String, HashMap<i8, String>>,
-        next_schedule: &HashMap<String,HashMap<i8, String>>
-    ) -> HashMap<String, HashMap<i8, String>> {
-        self.delta_e = self.score.calculate_total_score(&schedule) - self.score.calculate_total_score(&next_schedule);
-        if (self.delta_e < 0.0){
-            return next_schedule.clone()
-        }
-        else {
-            if self.temperature < self.limit {
-                return schedule.clone()
-            }
-            let probability = (self.delta_e / self.temperature).exp();
-            let acceptance_variable = random::random_choice_from_range_double(0.0, 1.0);
-
-            self.temperature *= self.alpha;
-            if (probability < acceptance_variable) {
-                return next_schedule.clone()
-            }
-        }
 
         schedule.clone()
     }
@@ -400,6 +376,35 @@ impl<'a> Alns<'a> {
         next_schedule
     }
 
+    fn greedy_fix_constraint_violation(){
+
+    }
+
+    fn simulated_annealing(
+        &mut self,
+        schedule: &HashMap<String, HashMap<i8, String>>,
+        next_schedule: &HashMap<String,HashMap<i8, String>>
+    ) -> HashMap<String, HashMap<i8, String>> {
+        self.delta_e = self.score.calculate_total_score(&schedule) - self.score.calculate_total_score(&next_schedule);
+        if (self.delta_e < 0.0){
+            return next_schedule.clone()
+        }
+        else {
+            if self.temperature < self.limit {
+                return schedule.clone()
+            }
+            let probability = (self.delta_e / self.temperature).exp();
+            let acceptance_variable = random::random_choice_from_range_double(0.0, 1.0);
+
+            self.temperature *= self.alpha;
+            if (probability < acceptance_variable) {
+                return next_schedule.clone()
+            }
+        }
+
+        schedule.clone()
+    }
+
     fn shake_and_repair(
         &self,
         schedule: &mut HashMap<String,HashMap<i8, String>>, operator_index: i8
@@ -414,26 +419,6 @@ impl<'a> Alns<'a> {
         };
 
         result
-    }
-
-    pub fn run_iteration(&mut self){
-        let mut current_solution = self.initial_solution();
-        self.solution = current_solution.clone();
-
-        for iter_num in 1..= self.max_iteration{
-            let operator_index = self.route_wheel(iter_num);
-            self.operator_time[operator_index as usize] += 1.0;
-
-            let next_solution = self.shake_and_repair(&mut current_solution, operator_index);
-            current_solution = self.simulate_annealing(&current_solution, &next_solution);
-            println!("{}", self.score.calculate_total_score(&current_solution));
-
-            if (self.score.calculate_total_score(&current_solution) > self.score.calculate_total_score(&self.solution)){
-                self.solution = current_solution.clone();
-            }
-        }
-
-        self.print_solution();
     }
 
     pub fn print_solution(&self){
@@ -451,5 +436,26 @@ impl<'a> Alns<'a> {
         println!("[horizontal coverage score]: {}", h_score_coverage);
         println!("[constraint score]: {}", score_constraint);
         println!("[pattern-constraint score]: {}", score_pattern_constraint);
+    }
+
+    pub fn run_iteration(&mut self){
+        let mut current_solution = self.initial_solution();
+        self.solution = current_solution.clone();
+
+        for iter_num in 1..= self.max_iteration{
+            println!("[iteration]: {}", &iter_num);
+
+            let operator_index = self.route_wheel(iter_num);
+            self.operator_time[operator_index as usize] += 1.0;
+
+            let next_solution = self.shake_and_repair(&mut current_solution, operator_index);
+            current_solution = self.simulated_annealing(&current_solution, &next_solution).clone();
+
+            if (self.score.calculate_total_score(&current_solution) > self.score.calculate_total_score(&self.solution)){
+                self.solution = current_solution.clone();
+            }
+        }
+
+        self.print_solution();
     }
 }
