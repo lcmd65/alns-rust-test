@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 use crate::coverage::coverage::Coverage;
+use crate::engine::cost::Score;
 use crate::input::input::InputData;
 use crate::utils::random;
-use std::hash::Hash;
+use crate::utils::hashing;
+use crate::utils::date;
+use crate::solution::solution;
 use crate::utils::to_excel;
-use std::ptr::null;
-use std::thread::current;
+use std::hash::Hash;
 use rand::{random, thread_rng, Rng};
-use crate::engine::cost::Score;
-use crate::staff::staff::Staff;
 
 pub struct Alns<'a> {
     max_iteration: i32,
@@ -34,7 +34,7 @@ impl<'a> Alns<'a> {
             limit: 1e-100,
             alpha: 0.95,
             temperature: 100.0,
-            operator_score: [0.2; 5],
+            operator_score: [0.1, 0.1, 0.1, 0.5, 0.2],
             operator_weight: [0.0; 5],
             operator_time: [1.0; 5],
             operator_probabilities: [0.0; 5],
@@ -109,7 +109,7 @@ impl<'a> Alns<'a> {
         for staff in &self.input.staffs {
             for week in 1..= self.input.schedule_period{
                 for day in 0..=6{
-                    if self.is_a_day(
+                    if solution::is_a_shift(
                         &initial_solution,
                         &staff.id,
                         &day + 7 * (&week - 1),
@@ -122,7 +122,7 @@ impl<'a> Alns<'a> {
                         }
 
                         if let Some(inner_map) = initial_solution.get_mut(&staff.id) {
-                            inner_map.insert(&day + 7 * (&week - 1), random_shift.id.to_string());
+                            inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), random_shift.id.to_string());
                         }
                     }
                 }
@@ -132,47 +132,6 @@ impl<'a> Alns<'a> {
         self.adjust_for_public_holiday(initial_solution)
     }
 
-    fn is_violation_core_day(
-        &self,
-        schedule: &HashMap<String, HashMap<i8, String>>,
-        staff: &String, index: i8
-    ) -> bool{
-        if schedule[staff].get(&index).unwrap().as_str() =="PH" ||
-            schedule[staff].get(&index).unwrap().as_str() == "DO" {
-            return false
-        };
-
-        true
-    }
-
-    fn is_violation_public_holiday(
-        &self,
-        schedule: &HashMap<String, HashMap<i8, String>>,
-        staff: &String, index: i8
-    ) -> bool{
-        if schedule[staff].get(&index).unwrap().as_str() == "PH"  {
-            return true;
-        };
-
-        false
-    }
-
-    fn is_a_day(
-        &self,
-        schedule: &HashMap<String, HashMap<i8, String>>,
-        staff: &String, index: i8,
-        shift_information: String
-    ) -> bool{
-        if schedule[staff].get(&index).unwrap().to_string() == shift_information {
-            return true;
-        }
-
-        false
-    }
-
-    fn is_leap_year()->bool{
-        false
-    }
 
     fn adjust_for_public_holiday(
         &self,
@@ -193,7 +152,7 @@ impl<'a> Alns<'a> {
 
                 while total_processing_day < total_days {
                     let day_in_month = match current_month {
-                        2 => if Self::is_leap_year() { 29 } else { 28 },
+                        2 => if date::is_leap_year() { 29 } else { 28 },
                         4 | 6 | 9 | 11 => 30,
                         _ => 31,
                     };
@@ -242,12 +201,8 @@ impl<'a> Alns<'a> {
         &mut self,
         iter: i32
     ) -> i8{
-        if (iter % 400 == 0){
-            self.reset_weight()
-        }
-        else {
-            self.update_weight()
-        }
+        if iter % 400 == 0{ self.reset_weight() }
+        else { self.update_weight() }
 
         let rand: f32 = random();
         let mut sum = 0.0;
@@ -284,7 +239,7 @@ impl<'a> Alns<'a> {
         let mut random_key = *random::random_choice(&vec![0, 1, 2, 3, 4, 5, 6]);
         let mut random_week = random::random_choice_from_range(1usize, *&self.input.schedule_period as usize);
         let mut random_staff = random::random_choice(&self.input.staffs);
-        while !self.is_violation_core_day(
+        while !solution::is_violation_core_day(
             &schedule,
             &random_staff.id,
             (&random_key + 7 * (&random_week - 1)) as i8
@@ -296,17 +251,12 @@ impl<'a> Alns<'a> {
 
         let mut random_shift = random::random_choice(&self.input.shifts);
         if random_staff.work_days == 5.5 {
-            while(random_shift.id == "M2".to_string()
-                || random_shift.id == "A2".to_string()
-                || random_shift.id == "PH".to_string()
-            ) {
+            while ["M2", "A2", "PH"].contains(&&*random_shift.id.to_string()) {
                 random_shift = random::random_choice(&self.input.shifts);
             }
         }
         else {
-            while(random_shift.id == "M3".to_string()
-                || random_shift.id == "PH".to_string()
-            ) {
+            while["M3", "PH"].contains(&&*random_shift.id.to_string()) {
                 random_shift = random::random_choice(&self.input.shifts);
             }
         }
@@ -319,10 +269,10 @@ impl<'a> Alns<'a> {
 
     fn simulate_annealing(
         &mut self,
-        schedule: &mut HashMap<String, HashMap<i8, String>>,
+        schedule: &HashMap<String, HashMap<i8, String>>,
         next_schedule: &HashMap<String,HashMap<i8, String>>
     ) -> HashMap<String, HashMap<i8, String>> {
-        self.delta_e = &self.score.calculate_total_score(schedule) - &self.score.calculate_total_score(schedule);
+        self.delta_e = &self.score.calculate_total_score(&schedule) - &self.score.calculate_total_score(&schedule);
         if (self.delta_e < 0.0){
             return next_schedule.clone()
         }
@@ -355,9 +305,9 @@ impl<'a> Alns<'a> {
                         for shift in coverage.shift.clone() {
                             next_schedule = schedule.clone();
                             if let Some(inner_map) = next_schedule.get_mut(&staff.clone()) {
-                                inner_map.insert((&coverage.day - 1 + 7 * (week - 1)), shift);
+                                inner_map.insert(date::convert_to_solution_hashmap_index(&(&coverage.day - 1), &week), shift);
                             }
-                            if self.score.calculate_coverage_score(schedule) < self.score.calculate_coverage_score(&next_schedule){
+                            if self.score.calculate_coverage_score(&schedule) < self.score.calculate_coverage_score(&next_schedule){
                                 return next_schedule.clone()
                             }
                         }
@@ -372,7 +322,8 @@ impl<'a> Alns<'a> {
     fn greedy_horizontal_coverage_enhancement(
         &self,
         schedule: &mut HashMap<String, HashMap<i8, String>>
-    ) -> HashMap<String, HashMap<i8, String>> {
+    ) -> HashMap<String, HashMap<i8, String>>
+    {
         let mut next_schedule: HashMap<String, HashMap<i8, String>> = HashMap::new();
         for horizontal_coverage in &self.input.horizontal_coverages {
             for staff in &self.input.staffs {
@@ -381,9 +332,9 @@ impl<'a> Alns<'a> {
                         for shift in horizontal_coverage.shifts.clone() {
                             next_schedule = schedule.clone();
                             if let Some(inner_map) = next_schedule.get_mut(&staff.id.clone()) {
-                                inner_map.insert((&day - 1 + 7 * (week - 1)), shift);
+                                inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), shift);
                             }
-                            if self.score.calculate_horizontal_coverage_score(schedule) < self.score.calculate_horizontal_coverage_score(&next_schedule) {
+                            if self.score.calculate_horizontal_coverage_score(&schedule) < self.score.calculate_horizontal_coverage_score(&next_schedule) {
                                 return next_schedule.clone()
                             }
                         }
@@ -398,24 +349,43 @@ impl<'a> Alns<'a> {
     fn greedy_swap_staff_shift_enhancement(
         &self,
         schedule: &mut HashMap<String, HashMap<i8, String>>
-    )-> HashMap<String, HashMap<i8, String>> {
+    )-> HashMap<String, HashMap<i8, String>>
+    {
+        let mut next_schedule = schedule.clone();
         for staff in &self.input.staffs{
             for week in 1..= *&self.input.schedule_period{
-                for day in 0.. 6{
-                    if !self.is_violation_public_holiday(&schedule, &staff.id, *&day + 7*(&week - 1)) {
+                for day in 0..6{
+                    if !solution::is_violation_public_holiday(&schedule, &staff.id, *&day + 7*(&week - 1)) {
                         for day_next in (&day.clone() + 1)..=6 {
-                            if !self.is_violation_public_holiday(&schedule, &staff.id, *&day_next + 7 * (&week - 1)){
-
-                                let mut next_schedule = schedule.clone();
-                                let temp_shift = schedule[&staff.id.clone()][&(&day + 7 * (&week - 1))].clone();
-                                print!("{}", temp_shift);
+                            if !solution::is_violation_public_holiday(
+                                &schedule,
+                                &staff.id,
+                                date::convert_to_solution_hashmap_index(&day_next, &week)
+                            ) &&
+                                !solution::is_a_shift(
+                                    &schedule,&staff.id,
+                                    date::convert_to_solution_hashmap_index(&day, &week),
+                                    solution::get_value(
+                                        &schedule,
+                                        &staff.id,
+                                        date::convert_to_solution_hashmap_index(&day_next, &week)
+                                    ).unwrap().to_string()
+                                )
+                            {
+                                next_schedule = schedule.clone();
 
                                 if let Some(inner_map) = next_schedule.get_mut(&staff.id) {
-                                    inner_map.insert(&day + 7 * (week - 1), inner_map.get(&(&day_next + 7 * (&week - 1))).unwrap().to_string());
-                                    inner_map.insert(day_next, temp_shift);
+                                    if let Some(temp_shift) = inner_map.get(&date::convert_to_solution_hashmap_index(&day, &week)).cloned() {
+                                        inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week),
+                                                         inner_map.get(&date::convert_to_solution_hashmap_index(&day_next, &week)).unwrap().clone());
+                                        inner_map.insert(date::convert_to_solution_hashmap_index(&day_next, &week), temp_shift);
+                                    }
                                 }
 
-                                if self.score.calculate_total_score(&schedule) < self.score.calculate_total_score(&next_schedule) {
+                                if self.score.calculate_total_score(&schedule) < self.score.calculate_total_score(&next_schedule) &&
+                                    self.score.calculate_horizontal_coverage_score(&schedule) <= self.score.calculate_horizontal_coverage_score(&next_schedule) &&
+                                    self.score.calculate_coverage_score(&schedule) <= self.score.calculate_coverage_score(&next_schedule)
+                                {
                                     return next_schedule;
                                 }
                             }
@@ -425,7 +395,7 @@ impl<'a> Alns<'a> {
             }
         }
 
-        schedule.clone()
+        next_schedule
     }
 
     fn shake_and_repair(
@@ -447,15 +417,16 @@ impl<'a> Alns<'a> {
     pub fn run_iteration(&mut self){
         let mut current_solution = self.initial_solution();
         self.solution = current_solution.clone();
+
         for iter_num in 1..= self.max_iteration{
             let operator_index = self.route_wheel(iter_num);
             self.operator_time[operator_index as usize] += 1.0;
 
             let next_solution = self.shake_and_repair(&mut current_solution, operator_index);
-            current_solution = self.simulate_annealing(&mut current_solution, &next_solution);
+            current_solution = self.simulate_annealing(&current_solution, &next_solution);
 
             if (self.score.calculate_total_score(&current_solution) > self.score.calculate_total_score( &self.solution)){
-                self.solution = current_solution.clone()
+                self.solution = current_solution.clone();
             }
         }
 

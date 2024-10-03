@@ -10,6 +10,7 @@ mod solution;
 mod utils;
 mod constraint;
 mod violation;
+mod executor;
 
 fn main() {
     let input_data = json::read_input_data_from_file("src/resource/dump/data_dummy.json")

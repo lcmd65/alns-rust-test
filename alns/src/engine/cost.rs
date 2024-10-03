@@ -65,12 +65,12 @@ impl<'a> Score<'a> {
 
     pub(crate) fn  calculate_constraint_score(&self, schedule: &HashMap<String,HashMap<i8, String>>) -> f32{
 
-        0.0
+        -0.0
     }
 
     pub(crate) fn  calculate_pattern_constraint_score(&self, schedule: &HashMap<String,HashMap<i8, String>>) -> f32{
 
-        0.0
+        -0.0
     }
 
 
