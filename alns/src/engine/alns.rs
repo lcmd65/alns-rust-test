@@ -9,6 +9,8 @@ use crate::solution::solution;
 use crate::utils::to_excel;
 use std::hash::Hash;
 use rand::{random, thread_rng, Rng};
+use crate::coverage::horizontal_coverage;
+use crate::violation::rule::Rule;
 
 pub struct Alns<'a> {
     max_iteration: i32,
@@ -22,7 +24,8 @@ pub struct Alns<'a> {
     operator_probabilities: [f32; 5],
     solution: HashMap<String,HashMap<i8,String>>,
     input: &'a InputData,
-    score: Score<'a>
+    score: Score<'a>,
+    rule: Rule<'a>
 }
 
 impl<'a> Alns<'a> {
@@ -40,6 +43,7 @@ impl<'a> Alns<'a> {
             operator_probabilities: [0.0; 5],
             solution: HashMap::new(),
             score: Score::new(&input_data),
+            rule: Rule::new(&input_data),
             input: &input_data
         };
         alns
@@ -237,7 +241,8 @@ impl<'a> Alns<'a> {
     fn random_swap_staff_shift(
         &self,
         schedule: &mut HashMap<String, HashMap<i8, String>>
-    ) -> HashMap<String, HashMap<i8, String>> {
+    ) -> HashMap<String, HashMap<i8, String>>
+    {
         let mut random_key = *random::random_choice(&vec![0, 1, 2, 3, 4, 5, 6]);
         let mut random_week = random::random_choice_from_range(1usize, *&self.input.schedule_period as usize);
         let mut random_staff = random::random_choice(&self.input.staffs);
@@ -275,17 +280,43 @@ impl<'a> Alns<'a> {
     ) -> HashMap<String, HashMap<i8, String>> {
         let mut next_schedule: HashMap<String, HashMap<i8, String>> = HashMap::new();
         for coverage in &self.input.coverages {
-            for staff_group_id in &coverage.staff_groups {
-                let staff_group = &self.input.staff_groups.iter().find(|&x| x.id == *staff_group_id).unwrap();
-                for staff in &staff_group.staff_list {
-                    for week in 1..self.input.schedule_period {
-                        for shift in coverage.shift.clone() {
-                            next_schedule = schedule.clone();
-                            if let Some(inner_map) = next_schedule.get_mut(&staff.clone()) {
-                                inner_map.insert(date::convert_to_solution_hashmap_index(&(&coverage.day - 1), &week), shift);
+            for week in 1..self.input.schedule_period {
+                let fulfill_value = self.rule.calculate_number_coverage_fulfill(&coverage, &week, &schedule);
+
+                if fulfill_value < coverage.desire_value{
+                    if coverage.types.contains(&"at least".to_string()) || coverage.types.contains(&"equal to".to_string()) {
+                        for staff_group_id in &coverage.staff_groups {
+                            let staff_group = &self.input.staff_groups.iter().find(|&x| x.id == *staff_group_id).unwrap();
+                            for staff in &staff_group.staff_list {
+                                for shift in coverage.shift.clone() {
+                                    next_schedule = schedule.clone();
+                                    if let Some(inner_map) = next_schedule.get_mut(&staff.clone()) {
+                                        inner_map.insert(date::convert_to_solution_hashmap_index(&(&coverage.day - 1), &week), shift);
+                                    }
+                                    if self.score.calculate_coverage_score(&schedule) < self.score.calculate_coverage_score(&next_schedule) {
+                                        return next_schedule.clone()
+                                    }
+                                }
                             }
-                            if self.score.calculate_coverage_score(&schedule) < self.score.calculate_coverage_score(&next_schedule){
-                                return next_schedule.clone()
+                        }
+                    }
+                }
+                else if fulfill_value > coverage.desire_value {
+                    if coverage.types.contains(&"equal to".to_string()) || coverage.types.contains(&"at most".to_string()){
+                        for shift in &self.input.shifts{
+                            if !coverage.shift.contains(&shift.id){
+                                for staff_group_id in &coverage.staff_groups {
+                                    let staff_group = &self.input.staff_groups.iter().find(|&x| x.id == *staff_group_id).unwrap();
+                                    for staff in &staff_group.staff_list {
+                                        next_schedule = schedule.clone();
+                                        if let Some(inner_map) = next_schedule.get_mut(&staff.clone()) {
+                                            inner_map.insert(date::convert_to_solution_hashmap_index(&(&coverage.day - 1), &week), shift.id.clone());
+                                        }
+                                        if self.score.calculate_coverage_score(&schedule) < self.score.calculate_coverage_score(&next_schedule) {
+                                            return next_schedule.clone()
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -305,14 +336,43 @@ impl<'a> Alns<'a> {
         for horizontal_coverage in &self.input.horizontal_coverages {
             for staff in &self.input.staffs {
                 for week in 1..self.input.schedule_period {
-                    for day in horizontal_coverage.days.clone() {
-                        for shift in horizontal_coverage.shifts.clone() {
-                            next_schedule = schedule.clone();
-                            if let Some(inner_map) = next_schedule.get_mut(&staff.id.clone()) {
-                                inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), shift);
+
+                    let fulfill_map = self.rule.calculate_number_horizontal_coverage_fulfill(&horizontal_coverage, &week, &schedule);
+                    if horizontal_coverage.types.contains(&"equal to".to_string()) {
+                        for (staff_id, value) in fulfill_map {
+                            if value > horizontal_coverage.desire_value {
+                                for day in horizontal_coverage.days.clone() {
+                                    if horizontal_coverage.shifts.contains(
+                                        &solution::get_value(&schedule, &staff_id, date::convert_to_solution_hashmap_index(&day, &week))
+                                            .unwrap()
+                                            .to_string()
+                                    ) {
+                                        for new_shift in &self.input.shifts{
+                                            if !horizontal_coverage.shifts.contains(&new_shift.id){
+                                                next_schedule = schedule.clone();
+                                                if let Some(inner_map) = next_schedule.get_mut(&staff.id.clone()) {
+                                                    inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), new_shift.id.clone());
+                                                }
+                                                if self.score.calculate_horizontal_coverage_score(&schedule) < self.score.calculate_horizontal_coverage_score(&next_schedule) {
+                                                    return next_schedule.clone()
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
-                            if self.score.calculate_horizontal_coverage_score(&schedule) < self.score.calculate_horizontal_coverage_score(&next_schedule) {
-                                return next_schedule.clone()
+                            else if value < horizontal_coverage.desire_value{
+                                for day in horizontal_coverage.days.clone() {
+                                    for shift in horizontal_coverage.shifts.clone() {
+                                        next_schedule = schedule.clone();
+                                        if let Some(inner_map) = next_schedule.get_mut(&staff.id.clone()) {
+                                            inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), shift);
+                                        }
+                                        if self.score.calculate_horizontal_coverage_score(&schedule) < self.score.calculate_horizontal_coverage_score(&next_schedule) {
+                                            return next_schedule.clone()
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -377,6 +437,10 @@ impl<'a> Alns<'a> {
     }
 
     fn greedy_fix_constraint_violation(){
+
+    }
+
+    fn adjustment(){
 
     }
 

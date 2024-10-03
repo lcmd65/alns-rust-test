@@ -79,7 +79,7 @@ impl<'a> Rule<'a> {
             for staff in &self.input.staffs{
                 let mut num_staff = 0;
                 for day in &coverage.days{
-                    if coverage.shifts.contains(schedule[&staff.id].get(&(day - 1 + 7 * (week - 1))).unwrap()) {
+                    if coverage.shifts.contains(schedule[&staff.id].get(&(day + 7 * (week - 1))).unwrap()) {
                         num_staff += 1;
                     }
                 }
@@ -101,13 +101,13 @@ impl<'a> Rule<'a> {
 
         for (_, item) in num_coverage{
             if coverage.types.contains(&"at least".to_string()){
-                num_violation +=  max(&coverage.desire_value - item, 0);
+                num_violation +=  max(&coverage.desire_value - &item, 0);
             }
             else if coverage.types.contains(&"equal to".to_string()){
-                num_violation +=  max(&coverage.desire_value - item, item -coverage.desire_value)
+                num_violation +=  max(&coverage.desire_value - &item, &item -coverage.desire_value)
             }
             else if coverage.types.contains(&"at most".to_string()){
-                num_violation +=  max(item - &coverage.desire_value, 0)
+                num_violation +=  max(&item - &coverage.desire_value, 0)
             }
         }
 
