@@ -1,5 +1,9 @@
-use std::collections::HashMap;
+use std::any::Any;
+use std::collections::{HashMap, HashSet};
 use crate::coverage::coverage::Coverage;
+use crate::coverage::horizontal_coverage::HorizontalCoverage;
+use crate::constraint::pattern_constraint::PatternConstraint;
+use crate::constraint::constraint::Constraint;
 use crate::engine::cost::Score;
 use crate::input::input::InputData;
 use crate::utils::random;
@@ -8,8 +12,10 @@ use crate::utils::date;
 use crate::solution::solution;
 use crate::utils::to_excel;
 use std::hash::Hash;
+use std::thread::current;
 use rand::{random, thread_rng, Rng};
 use crate::coverage::horizontal_coverage;
+use crate::staff::staff::Staff;
 use crate::violation::rule::Rule;
 
 pub struct Alns<'a> {
@@ -462,9 +468,227 @@ impl<'a> Alns<'a> {
         next_schedule
     }
 
-    fn greedy_fix_constraint_violation(schedule: &HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
+    fn number_constraint_violation(&self, constraint: &dyn Any, schedule: &HashMap<String, HashMap<i8, String>>) -> i32{
+        let bool_result = if let Some(constraint_clone) = constraint.downcast_ref::<Constraint>() {
+            let result_match = match constraint_clone.id.as_str() {
+                "exactly-staff-working-time" => {
 
+                    let mut number_violation = 0;
+                    for week in 1..= &self.input.schedule_period {
+                        for staff in &self.input.staffs {
+                            number_violation += match self.rule.calculate_number_staff_time_fulfill(&staff.id, &week, &schedule){
+                                44.0 => {0}
+                                _=> {1}
+                            } as i32;
+                        }
+                    }
+                    number_violation
+                }
 
+                "archive-0.5-day" => {
+                    let mut number_violation = 0;
+                    for week in 1..= &self.input.schedule_period {
+                        for staff in &constraint_clone.staff_groups {
+                            number_violation += match self.rule.calculate_number_staff_day_fulfill(&staff, &week, &schedule){
+                                 5.5 => {0}
+                                _=> {1}
+                            } as i32;
+                        }
+                    }
+                    number_violation
+                }
+
+                "un-archive-0.5-day" => {
+                    let mut number_violation = 0;
+                    for week in 1..= &self.input.schedule_period {
+                        for staff in &constraint_clone.staff_groups {
+                            number_violation += match self.rule.calculate_number_staff_day_fulfill(&staff, &week, &schedule){
+                                6.0 => {0}
+                                _=> {1}
+                            } as i32;
+                        }
+                    }
+                    number_violation
+                }
+
+                _ => {
+                    {0}
+                }
+            };
+
+            result_match
+        } else if let Some(constraint_clone) = constraint.downcast_ref::<HorizontalCoverage>() {
+            let mut number_violation = 0;
+            for week in &self.input.schedule_period{
+                number_violation += self.rule.calculate_number_horizontal_coverage_violation(&constraint_clone, &week, & schedule) as i32;
+            }
+
+            number_violation
+        } else if let Some(constraint_clone) = constraint.downcast_ref::<PatternConstraint>() {
+
+            0
+        } else {
+
+            0
+        };
+
+        bool_result
+    }
+
+    fn get_higher_priority_constraint(&self, current_constraint_priority: &dyn Any, constraint_id: &String) -> HashMap<i8, dyn Any>{
+
+        let mut map : HashMap<i8, Constraint> = HashMap::new();
+        for cons in &self.input.constraints{
+            if &cons.priority >= &current_constraint_priority && &cons.id != constraint_id{
+                map.insert(cons.priority.clone(), **cons);
+            }
+        }
+
+        for horizontal_constraint in &self.input.horizontal_coverages{
+            if &horizontal_constraint.priority >= current_constraint_priority {
+                map.insert(horizontal_constraint.priority.clone(), **horizontal_constraint);
+            }
+        }
+
+        for pattern_constraint in &self.input.pattern_constraints{
+            if &pattern_constraint.priority >= current_constraint_priority {
+                map.insert(pattern_constraint.priority.clone(), **pattern_constraint)
+            }
+        }
+
+        map
+    }
+
+    fn is_make_upper_constraint_worse(&self, old_constraint_violation_list: &HashMap<i8, i8>, new_constraint_violation_list: &HashMap<i8, i8>) -> bool{
+        for index in 10..=1 {
+            if old_constraint_violation_list.get(&index) {
+                if old_constraint_violation_list.get(&index) > new_constraint_violation_list.get(&index) {
+                    return false;
+                }
+
+                else if old_constraint_violation_list.get(&index) < new_constraint_violation_list.get(&index){
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
+    fn hard_fix_constraint_violation(&self, schedule: &HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>>{
+
+        schedule.clone()
+    }
+
+    fn greedy_fix_constraint_violation(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
+        for priority in 10..=1 {
+            for constraint in &self.input.constraints{
+                if constraint.priority == priority{
+                    let list_constraint_upper_priority = self.get_higher_priority_constraint(&constraint, &&constraint.id);
+                    let mut list_violation : HashMap<i32, i32> = HashMap::new();
+                    for (index, cons) in list_constraint_upper_priority {
+                        list_violation.insert (*&index, self.number_constraint_violation(&cons, &schedule));
+                    }
+
+                    let next_schedule = match constraint.id.as_str() {
+                        "exactly-staff-working-time" => {
+                            for week in 1..= *&self.input.schedule_period {
+                                for staff in &self.input.staffs {
+                                    let map_temp_violation = self.rule.constraint_violation (
+                                        &constraint,
+                                        &week,
+                                        &schedule
+                                    ) ;
+
+                                    for (staff_, violation) in map_temp_violation {
+                                        if violation > 0.0 {
+                                            if *&self.input.staffs
+                                               .iter()
+                                               .find(|&x| x.id == staff_)
+                                               .unwrap()
+                                               .work_days
+                                               .clone() == 5.5
+                                            {
+                                                let mut next_temp_schedule = schedule.clone();
+                                                for day in 0..=6 {
+                                                    if ["M2", "A2"].constains(&solution::get_value(
+                                                        &next_temp_schedule,
+                                                        &staff_,
+                                                        date::convert_to_solution_hashmap_index(&day, &week))
+                                                    ){
+                                                        if let Some(inner_map)  = next_temp_schedule.get_mut(&staff_) {
+                                                            next_temp_schedule.insert(
+                                                                day,
+                                                                match solution::get_value(
+                                                                    &next_temp_schedule,
+                                                                    &staff_,
+                                                                    date::convert_to_solution_hashmap_index(&day, &week))
+                                                                {
+
+                                                                    "M2" => {"M1"}
+                                                                    "A2" => {"A1"}
+                                                                    _ => {
+                                                                        solution::get_value(
+                                                                            &next_temp_schedule,
+                                                                            &staff_,
+                                                                            date::convert_to_solution_hashmap_index(&day, &week)
+                                                                        )
+                                                                    }
+                                                                }
+                                                            );
+                                                        };
+                                                    }
+                                                }
+
+                                                let mut counting_duration_day: HashMap<i8, i8> = HashMap::new();
+                                                for index in vec![0, 4, 7, 8] {
+                                                    counting_duration_day.insert(index, 0);
+                                                }
+
+                                                for day in 0..=6{
+                                                    let current_shift = solution::get_value(
+                                                        &next_temp_schedule,
+                                                        &staff_,
+                                                        date::convert_to_solution_hashmap_index(&day, &week)
+                                                    );
+
+                                                    let current_shift_duration = &self.input.shifts
+                                                        .iter()
+                                                        .find(|&x| x.id.as_str() == current_shift.unwrap())
+                                                        .unwrap()
+                                                        .duration;
+
+                                                    counting_duration_day.insert(*current_shift_duration, counting_duration_day.get(current_shift_duration).unwrap() + 1);
+                                                }
+
+                                                if counting_duration_day[4] < 0 {
+                                                    for day in 0..= 6{
+
+                                                        if let Some (inner_map) = next_temp_schedule.get_mut(&staff_){
+                                                            inner_map.insert()
+                                                        }
+                                                    }
+                                                }
+
+                                            }
+
+                                           if let Some(inner_map) = schedule.get_mut(&staff_) {}
+                                       }
+                                    }
+                                }
+                            }
+                        }
+
+                        "archive-0.5-day" => {}
+
+                        "un-archive-0.5-day" => {}
+
+                        _=> {}
+                    }
+
+                }
+            }
+        }
         schedule.clone()
     }
 

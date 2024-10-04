@@ -5,7 +5,7 @@ use serde_json::Deserializer;
 use serde::{Deserialize, Serialize};
 use crate::staff::staff_group::StaffGroup;
 
-#[derive(Deserialize, Serialize, PartialEq)]
+#[derive(Deserialize, Serialize, PartialEq, Eq)]
 pub struct Coverage {
     pub(crate) id: String,
     pub(crate) staff_groups: Vec<String>,
