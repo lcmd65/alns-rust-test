@@ -44,7 +44,7 @@ impl<'a> Alns<'a> {
             limit: 1e-100,
             alpha: 0.95,
             temperature: 100.0,
-            operator_score: [0.0, 0.0, 0.0, 0.0, 1.0],
+            operator_score: [0.2; 5],
             operator_weight: [0.0; 5],
             operator_time: [1.0; 5],
             operator_probabilities: [0.0; 5],
@@ -482,7 +482,7 @@ impl<'a> Alns<'a> {
                                 ) ;
 
                                 for (staff_, violation) in map_temp_violation {
-                                    if violation > 0.0 {
+                                    if violation != 44.0 {
                                         if *&self.input.staffs
                                             .iter()
                                             .find(|&x| x.id == staff_)
@@ -605,21 +605,15 @@ impl<'a> Alns<'a> {
 
                                             return next_temp_schedule;
                                         }
-                                        else if *&self.input.staffs
-                                            .iter()
-                                            .find(|&x| x.id == staff_)
-                                            .unwrap()
-                                            .work_days
-                                            .clone() == 6.0
+                                        else
                                         {
-
                                             let mut next_temp_schedule = schedule.clone();
                                             for day in 0..=6 {
-                                                if ["M3"].contains(&solution::get_value(
+                                                if solution::get_value(
                                                     &next_temp_schedule,
                                                     &staff_,
-                                                    date::convert_to_solution_hashmap_index(&day, &week)).unwrap().as_str()
-                                                ){
+                                                    date::convert_to_solution_hashmap_index(&day, &week)).unwrap() == "M3"
+                                                {
                                                     if let Some(inner_map)  = next_temp_schedule.get_mut(&staff_) {
                                                         inner_map.insert(
                                                             date::convert_to_solution_hashmap_index(&day, &week),
@@ -713,10 +707,93 @@ impl<'a> Alns<'a> {
                             }
                         }
 
-                        "archive-0.5-day" => {}
+                        "archive-0.5-day" => {
+                            for week in 1..= *&self.input.schedule_period {
+                                let map_temp_violation = self.rule.constraint_violation(
+                                    &constraint,
+                                    &week,
+                                    &schedule
+                                );
 
-                        "un-archive-0.5-day" => {}
+                                for (staff_, violation) in map_temp_violation{
+                                    if violation != 5.5 {
 
+                                        let mut next_temp_schedule = schedule.clone();
+                                        for day in 0..=6 {
+                                            if ["M2", "A2"].contains(&solution::get_value(
+                                                &next_temp_schedule,
+                                                &staff_,
+                                                date::convert_to_solution_hashmap_index(&day, &week))
+                                                .unwrap()
+                                                .as_str()
+                                            ){
+                                                if let Some(inner_map)  = next_temp_schedule.get_mut(&staff_) {
+                                                    inner_map.insert(
+                                                        date::convert_to_solution_hashmap_index(&day, &week),
+                                                        match solution::get_value(
+                                                            &schedule,
+                                                            &staff_,
+                                                            date::convert_to_solution_hashmap_index(&day, &week)).unwrap().as_str()
+                                                        {
+                                                            "M2" => {"M1".to_string()}
+                                                            "A2" => {"A1".to_string()}
+                                                            _ => {
+                                                                random::random_choice(&vec!["M1", "A1"]).to_string()
+                                                            }
+                                                        }
+                                                    );
+                                                };
+                                            }
+                                        }
+
+                                        return next_temp_schedule
+                                    }
+                                }
+                            }
+                        }
+
+                        "un-archive-0.5-day" => {
+                            for week in 1..= *&self.input.schedule_period {
+                                let map_temp_violation = self.rule.constraint_violation(
+                                    &constraint,
+                                    &week,
+                                    &schedule
+                                );
+
+                                for (staff_, violation) in map_temp_violation{
+                                    if violation != 6.0 {
+
+                                        let mut next_temp_schedule = schedule.clone();
+                                        for day in 0..=6 {
+                                            if solution::get_value(
+                                                &next_temp_schedule,
+                                                &staff_,
+                                                date::convert_to_solution_hashmap_index(&day, &week))
+                                                .unwrap() == "M3"
+                                            {
+                                                if let Some(inner_map)  = next_temp_schedule.get_mut(&staff_) {
+                                                    inner_map.insert(
+                                                        date::convert_to_solution_hashmap_index(&day, &week),
+                                                        match solution::get_value(
+                                                            &schedule,
+                                                            &staff_,
+                                                            date::convert_to_solution_hashmap_index(&day, &week)).unwrap().as_str()
+                                                        {
+                                                            "M3" => {"M2".to_string()}
+                                                            _ => {
+                                                                random::random_choice(&vec!["M2", "A2"]).to_string()
+                                                            }
+                                                        }
+                                                    );
+                                                };
+                                            }
+                                        }
+
+                                        return next_temp_schedule
+                                    }
+                                }
+                            }
+                        }
                         _=> {}
                     };
                 }
