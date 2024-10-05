@@ -83,7 +83,7 @@
     {
       "id": "Staff_2",
       "name": "Dat09",
-      "work_days": 6
+      "work_days": 6.0
     },
     {
       "id": "Staff_3",
@@ -93,12 +93,12 @@
     {
       "id": "Staff_4",
       "name": "Dat09",
-      "work_days": 6
+      "work_days": 6.0
     },
     {
       "id": "Staff_5",
       "name": "Dat09",
-      "work_days": 6
+      "work_days": 6.0
     },
     {
       "id": "Staff_6",
@@ -108,17 +108,17 @@
     {
       "id": "Staff_7",
       "name": "Dat09",
-      "work_days": 6
+      "work_days": 6.0
     },
     {
       "id": "Staff_8",
       "name": "Dat09",
-      "work_days": 6
+      "work_days": 6.0
     },
     {
       "id": "Staff_9",
       "name": "Dat09",
-      "work_days": 6
+      "work_days": 6.0
     }
   ],
   "staff_groups": [

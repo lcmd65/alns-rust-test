@@ -79,6 +79,22 @@ impl<'a> Alns<'a> {
         }
     }
 
+    fn coverage_calculate(
+        &self,
+        day: i8,
+        coverage: &Coverage,
+        schedule: &HashMap<String, HashMap<i8, String>>
+    ) -> i8
+    {
+        let mut number_coverage_fulfill  = 0;
+        for staff in &self.input.staffs {
+            if coverage.shift.contains(&schedule[&staff.id][&day]) {
+                number_coverage_fulfill += 1;
+            }
+        }
+        number_coverage_fulfill
+    }
+
     fn initial_solution(&self) -> HashMap<String, HashMap<i8, String>> {
 
         let mut initial_solution: HashMap<String, HashMap<i8, String>> = HashMap::new();
@@ -86,54 +102,40 @@ impl<'a> Alns<'a> {
             let staff_id = &staff.id;
             let mut inner_map: HashMap<i8, String> = HashMap::new();
 
-            for index in 0.. &self.input.schedule_period * 7 {
-                if (index + 1) % 7 == 0 {
-                    inner_map.insert(index, "DO".to_string());
+            for index in 0..&self.input.schedule_period * 7 {
+                if (&index + 1) % 7 == 0 {
+                    inner_map.insert(index.clone(), "DO".to_string());
                 } else {
-                    inner_map.insert(index, "".to_string());
+                    inner_map.insert(index.clone(), "".to_string());
                 }
             }
-
             initial_solution.insert(staff_id.to_string(), inner_map);
         }
-
         for staff in &self.input.staffs {
-            for index in 0..&self.input.schedule_period * 7 {
-                if (initial_solution[&staff.id][&index] != "DO".to_string()) {
+            for index in 0.. &self.input.schedule_period * 7 {
+                if solution::is_a_shift(&initial_solution, &staff.id, index, "".to_string()) {
                     for coverage in &self.input.coverages {
                         if coverage.desire_value >
                             self.coverage_calculate(
-                                index,
+                                index.clone(),
                                 &coverage,
                                 &initial_solution
                             )
                         {
                             if let Some(inner_map) = initial_solution.get_mut(&staff.id) {
-                                inner_map.insert(index, coverage.shift_random());
+                                inner_map.insert(index.clone(), coverage.shift_random());
                             }
                         }
                     }
-                }
-            }
-        }
 
-        for staff in &self.input.staffs {
-            for week in 1..= self.input.schedule_period{
-                for day in 0..=6{
-                    if solution::is_a_shift(
-                        &initial_solution,
-                        &staff.id,
-                        &day + 7 * (&week - 1),
-                        "".to_string())
-                    {
+                    if solution::is_a_shift(&initial_solution, &staff.id, index, "".to_string()) {
                         let mut random_shift = random::random_choice(&self.input.shifts);
-
-                        while(*&random_shift.id == "DO".to_string() || *&random_shift.id == "PH".to_string()) {
+                        while (*&random_shift.id == "DO".to_string() || *&random_shift.id == "PH".to_string()) {
                             random_shift = random::random_choice(&self.input.shifts);
                         }
 
                         if let Some(inner_map) = initial_solution.get_mut(&staff.id) {
-                            inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), random_shift.id.to_string());
+                            inner_map.insert(index.clone(), random_shift.id.to_string());
                         }
                     }
                 }
@@ -191,22 +193,6 @@ impl<'a> Alns<'a> {
             }
         }
         schedule
-    }
-
-    fn coverage_calculate(
-        &self,
-        day: i8,
-        coverage: &Coverage,
-        schedule: &HashMap<String, HashMap<i8, String>>
-    ) -> i8
-    {
-        let mut number_coverage_fulfill  = 0;
-        for staff in &self.input.staffs {
-            if coverage.shift.contains(&schedule[&staff.id][&day]) {
-                number_coverage_fulfill += 1;
-            }
-        }
-        number_coverage_fulfill
     }
 
     fn route_wheel(
@@ -480,173 +466,248 @@ impl<'a> Alns<'a> {
     }
 
     fn greedy_fix_constraint_violation(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
-        for priority in 10..=1 {
+        for priority in (1..=10).rev() {
             for constraint in &self.input.constraints{
                 if constraint.priority == priority{
                     let list_constraint_upper_priority = self.rule.get_higher_priority_constraint(&constraint.priority, &&constraint.id);
                     let list_violation  = self.rule.list_number_constraint_violation(&list_constraint_upper_priority, &schedule);
 
-                    let result = match constraint.id.as_str() {
+                    match constraint.id.as_str() {
                         "exactly-staff-working-time" => {
-                            let new_schedule = schedule.clone();
                             for week in 1..= *&self.input.schedule_period {
-                                for staff in &self.input.staffs {
-                                    let map_temp_violation = self.rule.constraint_violation (
-                                        &constraint,
-                                        &week,
-                                        &schedule
-                                    ) ;
+                                let map_temp_violation = self.rule.constraint_violation (
+                                    &constraint,
+                                    &week,
+                                    &schedule
+                                ) ;
 
-                                    for (staff_, violation) in map_temp_violation {
-                                        if violation > 0.0 {
-                                            if *&self.input.staffs
-                                               .iter()
-                                               .find(|&x| x.id == staff_)
-                                               .unwrap()
-                                               .work_days
-                                               .clone() == 5.5
-                                            {
-                                                let mut next_temp_schedule = schedule.clone();
-                                                for day in 0..=6 {
-                                                    if ["M2", "A2"].contains(&solution::get_value(
-                                                        &next_temp_schedule,
-                                                        &staff_,
-                                                        date::convert_to_solution_hashmap_index(&day, &week))
-                                                        .unwrap()
-                                                        .as_str()
-                                                    ){
-                                                        if let Some(inner_map)  = next_temp_schedule.get_mut(&staff_) {
-                                                            inner_map.insert(
-                                                                date::convert_to_solution_hashmap_index(&day, &week),
-                                                                match solution::get_value(
-                                                                    &schedule,
-                                                                    &staff_,
-                                                                    date::convert_to_solution_hashmap_index(&day, &week)
-                                                                ).unwrap().as_str()
-                                                                {
-                                                                    "M2" => {"M1".to_string()}
-                                                                    "A2" => {"A1".to_string()}
-                                                                    _ => {
-                                                                        random::random_choice(&vec!["M1", "M2"]).to_string()
-                                                                    }
-                                                                }
-                                                            );
-                                                        };
-                                                    }
-                                                }
-
-                                                let mut counting_duration_day: HashMap<i8, i8> = HashMap::new();
-                                                for index in vec![0, 4, 7, 8] {
-                                                    counting_duration_day.insert(index, 0);
-                                                }
-
-                                                for day in 0..=6{
-                                                    let current_shift = solution::get_value(
-                                                        &next_temp_schedule,
-                                                        &staff_,
-                                                        date::convert_to_solution_hashmap_index(&day, &week)
-                                                    );
-
-                                                    let current_shift_duration = &self.input.shifts
-                                                        .iter()
-                                                        .find(|&x| x.id.as_str() == &current_shift.clone().unwrap())
-                                                        .unwrap()
-                                                        .duration;
-
-                                                    counting_duration_day.insert(*current_shift_duration, counting_duration_day.get(current_shift_duration).unwrap() + 1);
-                                                }
-
-                                                if counting_duration_day[&4] < 0 {
-
-                                                    let mut list_next_schedule : Vec<HashMap<String, HashMap<i8, String>>> = Vec::new();
-                                                    for day in 0..= 6{
-                                                        let shift_list = self.input.shifts.iter().filter(|&x| x.duration == 4);
-                                                        for shift in shift_list{
-
-                                                            let mut next_temp_temp_schedule = next_temp_schedule.clone();
-                                                            if let Some(inner_map) = next_temp_temp_schedule.get_mut(&staff_){
-                                                                inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), shift.id.clone());
-                                                            }
-                                                            list_next_schedule.insert(
-                                                                day as usize,
-                                                                next_temp_temp_schedule.clone()
-                                                            );
-                                                        }
-                                                    }
-                                                    for (next_temp_temp_schedule) in list_next_schedule {
-                                                        let list_violation_temp_schedule =
-                                                            self.rule.list_number_constraint_violation(
-                                                                &list_constraint_upper_priority,
-                                                                &next_temp_temp_schedule
-                                                            );
-                                                        if !self.rule.is_make_upper_constraint_worse(&list_violation, &list_violation_temp_schedule) {
-                                                            next_temp_schedule = next_temp_temp_schedule.clone();
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-
-                                                if counting_duration_day[&4] > 1 {
-                                                    let mut num = 0;
-                                                    while (num < counting_duration_day[&4] -1) {
-                                                        for day in 0..= 6 {
-                                                            if solution::get_value(&next_temp_schedule, &staff_, date::convert_to_solution_hashmap_index(&day, &week))
-                                                                .unwrap()
-                                                                .clone() == "M3"
+                                for (staff_, violation) in map_temp_violation {
+                                    if violation > 0.0 {
+                                        if *&self.input.staffs
+                                            .iter()
+                                            .find(|&x| x.id == staff_)
+                                            .unwrap()
+                                            .work_days
+                                            .clone() == 5.5
+                                        {
+                                            let mut next_temp_schedule = schedule.clone();
+                                            for day in 0..=6 {
+                                                if ["M2", "A2"].contains(&solution::get_value(
+                                                    &next_temp_schedule,
+                                                    &staff_,
+                                                    date::convert_to_solution_hashmap_index(&day, &week))
+                                                    .unwrap()
+                                                    .as_str()
+                                                ){
+                                                    if let Some(inner_map)  = next_temp_schedule.get_mut(&staff_) {
+                                                        inner_map.insert(
+                                                            date::convert_to_solution_hashmap_index(&day, &week),
+                                                            match solution::get_value(
+                                                                &schedule,
+                                                                &staff_,
+                                                                date::convert_to_solution_hashmap_index(&day, &week)).unwrap().as_str()
                                                             {
-                                                                if let Some(inner_map) = next_temp_schedule.get_mut(&staff_){
-                                                                    inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "M1".to_string());
+                                                                "M2" => {"M1".to_string()}
+                                                                "A2" => {"A1".to_string()}
+                                                                _ => {
+                                                                    random::random_choice(&vec!["M1", "A1"]).to_string()
                                                                 }
+                                                            }
+                                                        );
+                                                    };
+                                                }
+                                            }
+
+                                            let mut counting_duration_day: HashMap<i8, i8> = HashMap::new();
+                                            for index in vec![0, 4, 7, 8] {
+                                                counting_duration_day.insert(index, 0);
+                                            }
+
+                                            for day in 0..=6{
+                                                let current_shift = solution::get_value(
+                                                    &next_temp_schedule,
+                                                    &staff_,
+                                                    date::convert_to_solution_hashmap_index(&day, &week)
+                                                );
+
+                                                let current_shift_duration = &self.input.shifts
+                                                    .iter()
+                                                    .find(|&x| x.id.as_str() == &current_shift.clone().unwrap())
+                                                    .unwrap()
+                                                    .duration;
+
+                                                counting_duration_day.insert(*current_shift_duration, counting_duration_day.get(current_shift_duration).unwrap() + 1);
+                                            }
+
+                                            if counting_duration_day[&0] > 1 {
+                                                let mut num = 0;
+                                                while (num < counting_duration_day[&4] -1) {
+                                                    for day in 0..= 6 {
+                                                        if solution::get_value(&next_temp_schedule, &staff_, day).unwrap() == "DO" {
+                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_){
+                                                                inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "M1".to_string());
                                                             }
                                                             num += 1;
                                                             break;
                                                         }
                                                     }
                                                 }
+                                            }
 
-                                                if counting_duration_day[&0] > 1 {
-                                                    let mut num = 0;
-                                                    while (num < counting_duration_day[&4] -1) {
-                                                        for day in 0..= 6 {
-                                                            if solution::get_value(&next_temp_schedule, &staff_, day).unwrap() == "DO" {
-                                                                if let Some(inner_map) = next_temp_schedule.get_mut(&staff_){
-                                                                    inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "M1".to_string());
-                                                                }
+                                            if counting_duration_day[&4] == 0 {
+
+                                                let mut list_next_schedule : Vec<HashMap<String, HashMap<i8, String>>> = Vec::new();
+                                                for day in 0..= 6{
+                                                    let shift_list = self.input.shifts.iter().filter(|&x| x.duration == 4);
+                                                    for shift in shift_list{
+
+                                                        let mut next_temp_temp_schedule = next_temp_schedule.clone();
+                                                        if let Some(inner_map) = next_temp_temp_schedule.get_mut(&staff_){
+                                                            inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), shift.id.clone());
+                                                        }
+                                                        list_next_schedule.insert(
+                                                            day as usize,
+                                                            next_temp_temp_schedule.clone()
+                                                        );
+                                                    }
+                                                }
+
+                                                for (next_temp_temp_schedule) in list_next_schedule {
+                                                    let list_violation_temp_schedule =
+                                                        self.rule.list_number_constraint_violation(
+                                                            &list_constraint_upper_priority,
+                                                            &next_temp_temp_schedule
+                                                        );
+                                                    if !self.rule.is_make_upper_constraint_worse(&list_violation, &list_violation_temp_schedule) {
+                                                        next_temp_schedule = next_temp_temp_schedule.clone();
+                                                        break;
+                                                    }
+                                                }
+                                            }
+
+                                            if counting_duration_day[&4] > 1 {
+                                                let mut num = 0;
+                                                while (num < &counting_duration_day[&4] -1) {
+                                                    for day in 0..= 6 {
+                                                        if solution::get_value(&next_temp_schedule, &staff_, date::convert_to_solution_hashmap_index(&day, &week))
+                                                            .unwrap()
+                                                            .clone() == "M3".to_string()
+                                                        {
+                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_){
+                                                                inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "M1".to_string());
                                                             }
                                                             num += 1;
                                                             break;
                                                         }
                                                     }
                                                 }
-                                                return next_temp_schedule;
                                             }
-                                            else if *&self.input.staffs
-                                                .iter()
-                                                .find(|&x| x.id == staff_)
-                                                .unwrap()
-                                                .work_days
-                                                .clone() == 6.0
-                                            {
 
-                                                let mut next_temp_schedule = schedule.clone();
-                                                for day in 0..=6 {
-                                                    if ["M3"].contains(&solution::get_value(
-                                                        &next_temp_schedule,
-                                                        &staff_,
-                                                        date::convert_to_solution_hashmap_index(&day, &week)).unwrap().as_str()
-                                                    ){
-                                                        if let Some(inner_map)  = next_temp_schedule.get_mut(&staff_) {
-                                                            inner_map.insert(
-                                                                date::convert_to_solution_hashmap_index(&day, &week),
-                                                                "M1".to_string(),
-                                                            );
-                                                        };
+                                            return next_temp_schedule;
+                                        }
+                                        else if *&self.input.staffs
+                                            .iter()
+                                            .find(|&x| x.id == staff_)
+                                            .unwrap()
+                                            .work_days
+                                            .clone() == 6.0
+                                        {
+
+                                            let mut next_temp_schedule = schedule.clone();
+                                            for day in 0..=6 {
+                                                if ["M3"].contains(&solution::get_value(
+                                                    &next_temp_schedule,
+                                                    &staff_,
+                                                    date::convert_to_solution_hashmap_index(&day, &week)).unwrap().as_str()
+                                                ){
+                                                    if let Some(inner_map)  = next_temp_schedule.get_mut(&staff_) {
+                                                        inner_map.insert(
+                                                            date::convert_to_solution_hashmap_index(&day, &week),
+                                                            "M2".to_string(),
+                                                        );
+                                                    };
+                                                }
+                                            }
+
+                                            let mut counting_duration_day: HashMap<i8, i8> = HashMap::new();
+                                            for index in vec![0, 4, 7, 8] {
+                                                counting_duration_day.insert(index, 0);
+                                            }
+
+                                            for day in 0..=6{
+
+                                                let current_shift = solution::get_value(
+                                                    &next_temp_schedule,
+                                                    &staff_,
+                                                    date::convert_to_solution_hashmap_index(&day, &week)
+                                                );
+
+                                                let current_shift_duration = &self.input.shifts
+                                                    .iter()
+                                                    .find(|&x| x.id.as_str() == &current_shift.clone().unwrap())
+                                                    .unwrap()
+                                                    .duration;
+
+                                                counting_duration_day.insert(*current_shift_duration, counting_duration_day.get(current_shift_duration).unwrap() + 1);
+                                            }
+
+                                            if counting_duration_day[&0] > 1 {
+                                                let mut num = 0;
+                                                while (num < counting_duration_day[&4] -1) {
+                                                    for day in 0..= 6 {
+                                                        if solution::get_value(&next_temp_schedule, &staff_, day).unwrap() == "DO" {
+                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_){
+                                                                inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "M1".to_string());
+                                                            }
+                                                            num += 1;
+                                                            break;
+                                                        }
                                                     }
                                                 }
-
-                                                return next_temp_schedule;
                                             }
-                                       }
+
+                                            if counting_duration_day[&8] < 2 {
+                                                let mut num = 0;
+                                                while (num < 2 - counting_duration_day[&8]) {
+                                                    for day in 0..= 6 {
+                                                        if ["A2", "M2"].contains(&solution::get_value(&next_temp_schedule, &staff_, day).unwrap().as_str()){
+                                                            let new_s = match solution::get_value(&next_temp_schedule, &staff_, day).unwrap().as_str(){
+                                                                "A2" => {"A1"}
+                                                                "M2" => {"M1"}
+                                                                _ => { random::random_choice(&vec!["A1", "M1"])}
+                                                            };
+                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_){
+                                                                inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), new_s.parse().unwrap());
+                                                            }
+                                                            num += 1;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            if counting_duration_day[&8] > 2 {
+                                                let mut num = 0;
+                                                while (num < counting_duration_day[&8] - 2) {
+                                                    for day in 0..= 6 {
+                                                        if ["A1", "M1"].contains(&solution::get_value(&next_temp_schedule, &staff_, day).unwrap().as_str()){
+                                                            let new_s = match solution::get_value(&next_temp_schedule, &staff_, day).unwrap().as_str(){
+                                                                "A1" =>  {"A2"}
+                                                                "M1" => {"M2"}
+                                                                _ => { random::random_choice(&vec!["A2", "M2"])}
+                                                            };
+                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_){
+                                                                inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), new_s.parse().unwrap());
+                                                            }
+                                                            num += 1;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            return next_temp_schedule;
+                                        }
                                     }
                                 }
                             }
@@ -713,11 +774,6 @@ impl<'a> Alns<'a> {
 
     pub fn print_solution(&self){
         to_excel::write_hashmap_to_excel(&self.solution.clone(),"src/output/output.xlsx");
-        println!("[solution]");
-        for (key, value) in &self.solution.clone(){
-            println!("{}: {:?}", key, value);
-        }
-
         let score_coverage = self.score.calculate_coverage_score(&self.solution);
         let h_score_coverage = self.score.calculate_horizontal_coverage_score(&self.solution);
         let score_constraint = self.score.calculate_constraint_score(&self.solution);
@@ -733,7 +789,6 @@ impl<'a> Alns<'a> {
         self.solution = current_solution.clone();
 
         for iter_num in 1..= self.max_iteration{
-            println!("[iteration]: {}", &iter_num);
 
             let operator_index = self.route_wheel(iter_num);
             self.operator_time[operator_index as usize] += 1.0;
