@@ -6,6 +6,7 @@ pub mod constraint;
 pub mod pattern_constraint;
 
 
+#[derive(Clone)]
 pub enum InterfaceConstraint {
     Constraint(Constraint),
     PatternConstraint(PatternConstraint),

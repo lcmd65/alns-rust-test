@@ -1,8 +1,7 @@
 use std::cmp::max;
 use std::collections::HashMap;
-use std::thread::sleep;
-use tokio::time::interval;
 use crate::constraint::constraint::Constraint;
+use crate::constraint::InterfaceConstraint;
 use crate::input::input::InputData;
 use crate::coverage::coverage::Coverage;
 use crate::coverage::horizontal_coverage::HorizontalCoverage;
@@ -189,5 +188,129 @@ impl<'a> Rule<'a> {
         };
 
         map
+    }
+    /// violation constraint utils
+
+    pub(crate) fn number_constraint_violation(&self, constraint: &InterfaceConstraint, schedule: &HashMap<String, HashMap<i8, String>>) -> i32{
+        let bool_result = match constraint {
+            InterfaceConstraint::Constraint(constraint_clone) => {
+                let result_match = match constraint_clone.id.as_str() {
+                    "exactly-staff-working-time" => {
+                        let mut number_violation = 0;
+                        for week in 1..=self.input.schedule_period {
+                            for staff in &self.input.staffs {
+                                number_violation += match self.calculate_number_staff_time_fulfill(&staff.id, &week, &schedule) {
+                                    44.0 => { 0 }
+                                    _ => { 1 }
+                                } as i32;
+                            }
+                        }
+                        number_violation
+                    }
+
+                    "archive-0.5-day" => {
+                        let mut number_violation = 0;
+                        for week in 1..=self.input.schedule_period {
+                            for staff in &constraint_clone.staff_groups {
+                                number_violation += match self.calculate_number_staff_day_fulfill(&staff, &week, &schedule) {
+                                    5.5 => { 0 }
+                                    _ => { 1 }
+                                } as i32;
+                            }
+                        }
+                        number_violation
+                    }
+
+                    "un-archive-0.5-day" => {
+                        let mut number_violation = 0;
+                        for week in 1..=self.input.schedule_period {
+                            for staff in &constraint_clone.staff_groups {
+                                number_violation += match self.calculate_number_staff_day_fulfill(&staff, &week, &schedule) {
+                                    6.0 => { 0 }
+                                    _ => { 1 }
+                                } as i32;
+                            }
+                        }
+                        number_violation
+                    }
+
+                    _ => {
+                        {0}
+                    }
+                };
+
+                result_match
+            }
+            InterfaceConstraint::HorizontalCoverage(constraint_clone) => {
+                let mut number_violation = 0;
+                for week in 1.. self.input.schedule_period{
+                    number_violation += self.calculate_number_horizontal_coverage_violation(&constraint_clone, &week, & schedule) as i32;
+                }
+
+                number_violation
+            }
+
+            _ => { 0 }
+        };
+
+
+        bool_result
+    }
+
+    pub(crate) fn list_number_constraint_violation(&self, list_constraint_upper_priority: &HashMap<i8, InterfaceConstraint>, schedule: &HashMap<String, HashMap<i8, String>>) -> HashMap<i8, i8>{
+        let mut list_violation_temp_schedule: HashMap<i8, i8> = HashMap::new();
+        for (index, cons) in *&list_constraint_upper_priority{
+            list_violation_temp_schedule.insert(*index, self.number_constraint_violation(&cons, &schedule) as i8);
+        }
+
+        list_violation_temp_schedule
+    }
+
+
+    pub(crate) fn get_higher_priority_constraint(
+        &self,
+        current_constraint_priority: &i8,
+        constraint_id: &String,
+    ) -> HashMap<i8, InterfaceConstraint> {
+        let mut map: HashMap<i8, InterfaceConstraint> = HashMap::new();
+
+        for cons in &self.input.constraints.clone() {
+            if cons.priority >= *current_constraint_priority && cons.id != *constraint_id {
+                let conn = InterfaceConstraint::Constraint(cons.clone());
+                map.insert(cons.priority, conn);
+            }
+        }
+
+        for horizontal_constraint in &self.input.horizontal_coverages.clone() {
+            if horizontal_constraint.priority >= *current_constraint_priority {
+                let conn = InterfaceConstraint::HorizontalCoverage(horizontal_constraint.clone());
+                map.insert(horizontal_constraint.priority, conn);
+            }
+        }
+
+        for pattern_constraint in &self.input.pattern_constraints.clone() {
+            if pattern_constraint.priority >= *current_constraint_priority {
+                let conn = InterfaceConstraint::PatternConstraint(pattern_constraint.clone());
+                map.insert(pattern_constraint.priority, conn);
+            }
+        }
+
+        map
+    }
+
+    pub(crate) fn is_make_upper_constraint_worse(&self, old_constraint_violation_list: &HashMap<i8, i8>, new_constraint_violation_list: &HashMap<i8, i8>) -> bool{
+        for index in 10..=1 {
+            if old_constraint_violation_list.get(&index).is_some() {
+                if old_constraint_violation_list.get(&index) > new_constraint_violation_list.get(&index) {
+                    return false;
+                }
+
+                else if old_constraint_violation_list.get(&index) < new_constraint_violation_list.get(&index){
+                    return true;
+                }
+            }
+        }
+
+        false
     }
 }

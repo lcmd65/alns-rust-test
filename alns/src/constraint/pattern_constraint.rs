@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use rand::seq::index::IndexVec;
 
-#[derive(Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct PatternConstraint {
     pub (crate) id: String,
     pub (crate) description: String,

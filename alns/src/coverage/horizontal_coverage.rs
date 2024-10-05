@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct HorizontalCoverage {
     pub (crate) id: String,
     pub (crate) shifts: Vec<String>,

@@ -1,7 +1,7 @@
 use std::iter::Map;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct Constraint {
     pub (crate) id: String,
     pub (crate) score_formula: String,
