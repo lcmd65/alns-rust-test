@@ -39,12 +39,12 @@ impl<'a> Alns<'a> {
 
     pub fn new(input_data: &'a InputData) -> Self {
         let alns = Self {
-            max_iteration: 100,
+            max_iteration: 1000,
             delta_e: 0.0,
             limit: 1e-100,
             alpha: 0.95,
             temperature: 100.0,
-            operator_score: [0.2; 5],
+            operator_score: [0.0, 0.0, 0.0, 0.0, 1.0],
             operator_weight: [0.0; 5],
             operator_time: [1.0; 5],
             operator_probabilities: [0.0; 5],
@@ -218,25 +218,24 @@ impl<'a> Alns<'a> {
         else { self.update_weight() }
 
         let rand: f32 = random();
-        let mut sum = 0.0;
-
-        for index in 0.. self.operator_weight.len(){
-            sum += &self.operator_weight[index];
-        }
+        let sum: f32 = self.operator_weight.iter().sum();
 
         self.operator_probabilities[0] = &self.operator_weight[0]/sum;
 
         for index in 1.. self.operator_weight.len(){
-            self.operator_probabilities[index] =  &self.operator_probabilities[index-1] +  &self.operator_weight[index]/sum;
+            self.operator_probabilities[index] =
+                &self.operator_probabilities[index-1] +
+                &self.operator_weight[index]/sum;
         }
 
         let mut choose_value:i8 = 0;
         if (rand <= self.operator_probabilities[0]){
             choose_value = 0;
-        }
-        else{
+        } else{
             for index in 1 ..= self.operator_weight.len() {
-                if rand > self.operator_probabilities[index - 1] && rand <= self.operator_probabilities[index] {
+                if rand > self.operator_probabilities[index - 1] &&
+                    rand <= self.operator_probabilities[index]
+                {
                     choose_value = index as i8
                 }
             }
@@ -475,7 +474,7 @@ impl<'a> Alns<'a> {
         schedule.clone()
     }
 
-    fn greedy_fix_coverage_violation (&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>>{
+    fn greedy_fix_coverage_violation(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>>{
 
         schedule.clone()
     }
@@ -621,7 +620,7 @@ impl<'a> Alns<'a> {
                                                 }
                                                 return next_temp_schedule;
                                             }
-                                            else if  *&self.input.staffs
+                                            else if *&self.input.staffs
                                                 .iter()
                                                 .find(|&x| x.id == staff_)
                                                 .unwrap()
