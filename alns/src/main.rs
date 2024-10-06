@@ -18,6 +18,7 @@ fn main() {
 
     println!("[validate_input_data]");
     let mut alns = Alns::new(&input_data);
+    println!("[alns start]");
     alns.run_iteration();
     println!("[end]");
 }

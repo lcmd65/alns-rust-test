@@ -9,8 +9,6 @@ use crate::solution::solution;
 use crate::utils::date;
 
 pub struct Rule<'a> {
-    hard_violation: HashMap<String, HashMap<i32, i32>>,
-    soft_violation: HashMap<String, HashMap<i32, i32>>,
     input: &'a InputData
 }
 
@@ -18,8 +16,6 @@ impl<'a> Rule<'a> {
 
     pub fn new(input_data: &'a InputData) -> Rule {
         Self{
-            hard_violation: HashMap::new(),
-            soft_violation: HashMap::new(),
             input: input_data
         }
     }
@@ -167,8 +163,8 @@ impl<'a> Rule<'a> {
             "archive-0.5-day" =>{
                 let mut temp_map :HashMap<String, f32> = HashMap::new();
 
-                for staff in &self.input.staffs{
-                    temp_map.insert(staff.id.clone(), self.calculate_number_staff_day_fulfill(&staff.id, &week, &schedule));
+                for staff in &constraint.staff_groups{
+                    temp_map.insert(staff.clone(), self.calculate_number_staff_day_fulfill(&staff, &week, &schedule));
                 }
 
                 temp_map
@@ -177,8 +173,8 @@ impl<'a> Rule<'a> {
             "un-archive-0.5-day" =>{
                 let mut temp_map :HashMap<String, f32> = HashMap::new();
 
-                for staff in &self.input.staffs{
-                    temp_map.insert(staff.id.clone(), self.calculate_number_staff_day_fulfill(&staff.id, &week, &schedule));
+                for staff in &constraint.staff_groups{
+                    temp_map.insert(staff.clone(), self.calculate_number_staff_day_fulfill(&staff, &week, &schedule));
                 }
 
                 temp_map

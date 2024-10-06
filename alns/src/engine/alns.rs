@@ -466,6 +466,8 @@ impl<'a> Alns<'a> {
     }
 
     fn greedy_fix_constraint_violation(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>> {
+        let mut next_temp_schedule = schedule.clone();
+
         for priority in (1..=10).rev() {
             for constraint in &self.input.constraints{
                 if constraint.priority == priority{
@@ -490,7 +492,6 @@ impl<'a> Alns<'a> {
                                             .work_days
                                             .clone() == 5.5
                                         {
-                                            let mut next_temp_schedule = schedule.clone();
                                             for day in 0..=6 {
                                                 if ["M2", "A2"].contains(&solution::get_value(
                                                     &next_temp_schedule,
@@ -498,8 +499,8 @@ impl<'a> Alns<'a> {
                                                     date::convert_to_solution_hashmap_index(&day, &week))
                                                     .unwrap()
                                                     .as_str()
-                                                ){
-                                                    if let Some(inner_map)  = next_temp_schedule.get_mut(&staff_) {
+                                                ) {
+                                                    if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
                                                         inner_map.insert(
                                                             date::convert_to_solution_hashmap_index(&day, &week),
                                                             match solution::get_value(
@@ -507,8 +508,8 @@ impl<'a> Alns<'a> {
                                                                 &staff_,
                                                                 date::convert_to_solution_hashmap_index(&day, &week)).unwrap().as_str()
                                                             {
-                                                                "M2" => {"M1".to_string()}
-                                                                "A2" => {"A1".to_string()}
+                                                                "M2" => { "M1".to_string() }
+                                                                "A2" => { "A1".to_string() }
                                                                 _ => {
                                                                     random::random_choice(&vec!["M1", "A1"]).to_string()
                                                                 }
@@ -523,7 +524,7 @@ impl<'a> Alns<'a> {
                                                 counting_duration_day.insert(index, 0);
                                             }
 
-                                            for day in 0..=6{
+                                            for day in 0..=6 {
                                                 let current_shift = solution::get_value(
                                                     &next_temp_schedule,
                                                     &staff_,
@@ -541,10 +542,10 @@ impl<'a> Alns<'a> {
 
                                             if counting_duration_day[&0] > 1 {
                                                 let mut num = 0;
-                                                while (num < counting_duration_day[&4] -1) {
-                                                    for day in 0..= 6 {
+                                                while (num < counting_duration_day[&4] - 1) {
+                                                    for day in 0..=6 {
                                                         if solution::get_value(&next_temp_schedule, &staff_, day).unwrap() == "DO" {
-                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_){
+                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
                                                                 inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "M1".to_string());
                                                             }
                                                             num += 1;
@@ -555,14 +556,12 @@ impl<'a> Alns<'a> {
                                             }
 
                                             if counting_duration_day[&4] == 0 {
-
-                                                let mut list_next_schedule : Vec<HashMap<String, HashMap<i8, String>>> = Vec::new();
-                                                for day in 0..= 6{
+                                                let mut list_next_schedule: Vec<HashMap<String, HashMap<i8, String>>> = Vec::new();
+                                                for day in 0..=6 {
                                                     let shift_list = self.input.shifts.iter().filter(|&x| x.duration == 4);
-                                                    for shift in shift_list{
-
+                                                    for shift in shift_list {
                                                         let mut next_temp_temp_schedule = next_temp_schedule.clone();
-                                                        if let Some(inner_map) = next_temp_temp_schedule.get_mut(&staff_){
+                                                        if let Some(inner_map) = next_temp_temp_schedule.get_mut(&staff_) {
                                                             inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), shift.id.clone());
                                                         }
                                                         list_next_schedule.insert(
@@ -587,13 +586,13 @@ impl<'a> Alns<'a> {
 
                                             if counting_duration_day[&4] > 1 {
                                                 let mut num = 0;
-                                                while (num < &counting_duration_day[&4] -1) {
-                                                    for day in 0..= 6 {
+                                                while (num < &counting_duration_day[&4] - 1) {
+                                                    for day in 0..=6 {
                                                         if solution::get_value(&next_temp_schedule, &staff_, date::convert_to_solution_hashmap_index(&day, &week))
                                                             .unwrap()
                                                             .clone() == "M3".to_string()
                                                         {
-                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_){
+                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
                                                                 inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "M1".to_string());
                                                             }
                                                             num += 1;
@@ -603,18 +602,14 @@ impl<'a> Alns<'a> {
                                                 }
                                             }
 
-                                            return next_temp_schedule;
-                                        }
-                                        else
-                                        {
-                                            let mut next_temp_schedule = schedule.clone();
+                                        } else {
                                             for day in 0..=6 {
                                                 if solution::get_value(
                                                     &next_temp_schedule,
                                                     &staff_,
                                                     date::convert_to_solution_hashmap_index(&day, &week)).unwrap() == "M3"
                                                 {
-                                                    if let Some(inner_map)  = next_temp_schedule.get_mut(&staff_) {
+                                                    if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
                                                         inner_map.insert(
                                                             date::convert_to_solution_hashmap_index(&day, &week),
                                                             "M2".to_string(),
@@ -628,8 +623,7 @@ impl<'a> Alns<'a> {
                                                 counting_duration_day.insert(index, 0);
                                             }
 
-                                            for day in 0..=6{
-
+                                            for day in 0..=6 {
                                                 let current_shift = solution::get_value(
                                                     &next_temp_schedule,
                                                     &staff_,
@@ -647,10 +641,10 @@ impl<'a> Alns<'a> {
 
                                             if counting_duration_day[&0] > 1 {
                                                 let mut num = 0;
-                                                while (num < counting_duration_day[&4] -1) {
-                                                    for day in 0..= 6 {
+                                                while (num < counting_duration_day[&4] - 1) {
+                                                    for day in 0..=6 {
                                                         if solution::get_value(&next_temp_schedule, &staff_, day).unwrap() == "DO" {
-                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_){
+                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
                                                                 inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "M1".to_string());
                                                             }
                                                             num += 1;
@@ -663,14 +657,14 @@ impl<'a> Alns<'a> {
                                             if counting_duration_day[&8] < 2 {
                                                 let mut num = 0;
                                                 while (num < 2 - counting_duration_day[&8]) {
-                                                    for day in 0..= 6 {
-                                                        if ["A2", "M2"].contains(&solution::get_value(&next_temp_schedule, &staff_, day).unwrap().as_str()){
-                                                            let new_s = match solution::get_value(&next_temp_schedule, &staff_, day).unwrap().as_str(){
-                                                                "A2" => {"A1"}
-                                                                "M2" => {"M1"}
-                                                                _ => { random::random_choice(&vec!["A1", "M1"])}
+                                                    for day in 0..=6 {
+                                                        if ["A2", "M2"].contains(&solution::get_value(&next_temp_schedule, &staff_, day).unwrap().as_str()) {
+                                                            let new_s = match solution::get_value(&next_temp_schedule, &staff_, day).unwrap().as_str() {
+                                                                "A2" => { "A1" }
+                                                                "M2" => { "M1" }
+                                                                _ => { random::random_choice(&vec!["A1", "M1"]) }
                                                             };
-                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_){
+                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
                                                                 inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), new_s.parse().unwrap());
                                                             }
                                                             num += 1;
@@ -683,14 +677,14 @@ impl<'a> Alns<'a> {
                                             if counting_duration_day[&8] > 2 {
                                                 let mut num = 0;
                                                 while (num < counting_duration_day[&8] - 2) {
-                                                    for day in 0..= 6 {
-                                                        if ["A1", "M1"].contains(&solution::get_value(&next_temp_schedule, &staff_, day).unwrap().as_str()){
-                                                            let new_s = match solution::get_value(&next_temp_schedule, &staff_, day).unwrap().as_str(){
-                                                                "A1" =>  {"A2"}
-                                                                "M1" => {"M2"}
-                                                                _ => { random::random_choice(&vec!["A2", "M2"])}
+                                                    for day in 0..=6 {
+                                                        if ["A1", "M1"].contains(&solution::get_value(&next_temp_schedule, &staff_, day).unwrap().as_str()) {
+                                                            let new_s = match solution::get_value(&next_temp_schedule, &staff_, day).unwrap().as_str() {
+                                                                "A1" => { "A2" }
+                                                                "M1" => { "M2" }
+                                                                _ => { random::random_choice(&vec!["A2", "M2"]) }
                                                             };
-                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_){
+                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
                                                                 inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), new_s.parse().unwrap());
                                                             }
                                                             num += 1;
@@ -699,8 +693,6 @@ impl<'a> Alns<'a> {
                                                     }
                                                 }
                                             }
-
-                                            return next_temp_schedule;
                                         }
                                     }
                                 }
@@ -712,16 +704,15 @@ impl<'a> Alns<'a> {
                                 let map_temp_violation = self.rule.constraint_violation(
                                     &constraint,
                                     &week,
-                                    &schedule
+                                    &next_temp_schedule
                                 );
 
                                 for (staff_, violation) in map_temp_violation{
                                     if violation != 5.5 {
-
-                                        let mut next_temp_schedule = schedule.clone();
                                         for day in 0..=6 {
+                                            let next_temp_temp_schedule = next_temp_schedule.clone();
                                             if ["M2", "A2"].contains(&solution::get_value(
-                                                &next_temp_schedule,
+                                                &next_temp_temp_schedule,
                                                 &staff_,
                                                 date::convert_to_solution_hashmap_index(&day, &week))
                                                 .unwrap()
@@ -731,7 +722,7 @@ impl<'a> Alns<'a> {
                                                     inner_map.insert(
                                                         date::convert_to_solution_hashmap_index(&day, &week),
                                                         match solution::get_value(
-                                                            &schedule,
+                                                            &next_temp_temp_schedule,
                                                             &staff_,
                                                             date::convert_to_solution_hashmap_index(&day, &week)).unwrap().as_str()
                                                         {
@@ -745,8 +736,6 @@ impl<'a> Alns<'a> {
                                                 };
                                             }
                                         }
-
-                                        return next_temp_schedule
                                     }
                                 }
                             }
@@ -757,25 +746,25 @@ impl<'a> Alns<'a> {
                                 let map_temp_violation = self.rule.constraint_violation(
                                     &constraint,
                                     &week,
-                                    &schedule
+                                    &next_temp_schedule
                                 );
 
                                 for (staff_, violation) in map_temp_violation{
                                     if violation != 6.0 {
 
-                                        let mut next_temp_schedule = schedule.clone();
                                         for day in 0..=6 {
+                                            let next_temp_temp_schedule = next_temp_schedule.clone();
                                             if solution::get_value(
-                                                &next_temp_schedule,
+                                                &next_temp_temp_schedule,
                                                 &staff_,
                                                 date::convert_to_solution_hashmap_index(&day, &week))
-                                                .unwrap() == "M3"
+                                                .unwrap().as_str() == "M3"
                                             {
                                                 if let Some(inner_map)  = next_temp_schedule.get_mut(&staff_) {
                                                     inner_map.insert(
                                                         date::convert_to_solution_hashmap_index(&day, &week),
                                                         match solution::get_value(
-                                                            &schedule,
+                                                            &next_temp_temp_schedule,
                                                             &staff_,
                                                             date::convert_to_solution_hashmap_index(&day, &week)).unwrap().as_str()
                                                         {
@@ -789,7 +778,6 @@ impl<'a> Alns<'a> {
                                             }
                                         }
 
-                                        return next_temp_schedule
                                     }
                                 }
                             }
@@ -800,7 +788,7 @@ impl<'a> Alns<'a> {
             }
         }
 
-        schedule.clone()
+        next_temp_schedule
     }
 
     fn adjustment(){
@@ -866,6 +854,7 @@ impl<'a> Alns<'a> {
         self.solution = current_solution.clone();
 
         for iter_num in 1..= self.max_iteration{
+            println!("iter: {}", iter_num);
 
             let operator_index = self.route_wheel(iter_num);
             self.operator_time[operator_index as usize] += 1.0;
