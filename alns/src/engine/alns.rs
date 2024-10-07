@@ -1,22 +1,13 @@
-use std::any::Any;
 use std::collections::{HashMap, HashSet};
 use crate::coverage::coverage::Coverage;
-use crate::coverage::horizontal_coverage::HorizontalCoverage;
-use crate::constraint::pattern_constraint::PatternConstraint;
-use crate::constraint::constraint::Constraint;
 use crate::engine::cost::Score;
 use crate::input::input::InputData;
 use crate::utils::random;
-use crate::utils::hashing;
 use crate::utils::date;
 use crate::solution::solution;
 use crate::utils::to_excel;
 use std::hash::Hash;
-use std::thread::current;
 use rand::{random, thread_rng, Rng};
-use crate::constraint::InterfaceConstraint;
-use crate::coverage::horizontal_coverage;
-use crate::staff::staff::Staff;
 use crate::violation::rule::Rule;
 
 pub struct Alns<'a> {
@@ -39,7 +30,7 @@ impl<'a> Alns<'a> {
 
     pub fn new(input_data: &'a InputData) -> Self {
         let alns = Self {
-            max_iteration: 1000,
+            max_iteration: 500,
             delta_e: 0.0,
             limit: 1e-100,
             alpha: 0.95,
@@ -269,7 +260,8 @@ impl<'a> Alns<'a> {
     fn greedy_coverage_enhancement(
         &self,
         schedule: &mut HashMap<String, HashMap<i8, String>>
-    ) -> HashMap<String, HashMap<i8, String>> {
+    ) -> HashMap<String, HashMap<i8, String>>
+    {
         let mut next_schedule: HashMap<String, HashMap<i8, String>> = HashMap::new();
         for coverage in &self.input.coverages {
             for week in 1..self.input.schedule_period {
@@ -454,13 +446,7 @@ impl<'a> Alns<'a> {
         next_schedule
     }
 
-
     fn hard_fix_constraint_violation(&self, schedule: &HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>>{
-
-        schedule.clone()
-    }
-
-    fn greedy_fix_coverage_violation(&self, schedule: &mut HashMap<String, HashMap<i8, String>>) -> HashMap<String, HashMap<i8, String>>{
 
         schedule.clone()
     }
@@ -794,6 +780,90 @@ impl<'a> Alns<'a> {
         let mut next_temp_schedule = schedule.clone();
 
         for priority in (1..=10).rev() {
+            for horizontal_coverage in &self.input.horizontal_coverages{
+                for staff in &self.input.staffs {
+                    for week in 1..self.input.schedule_period {
+
+                        let fulfill_map =
+                            self.rule.calculate_number_horizontal_coverage_fulfill(
+                                &horizontal_coverage,
+                                &week,
+                                &next_temp_schedule
+                            );
+
+                        if horizontal_coverage.types.contains(&"equal to".to_string()) {
+                            for (staff_id, value) in fulfill_map {
+                                if value > horizontal_coverage.desire_value {
+                                    let mut number_processing_horizontal = 0;
+                                    while number_processing_horizontal < value - horizontal_coverage.desire_value {
+                                        'outer: for day in horizontal_coverage.days.clone() {
+                                            if horizontal_coverage.shifts.contains(
+                                                &solution::get_value(
+                                                    &next_temp_schedule,
+                                                    &staff_id,
+                                                    date::convert_to_solution_hashmap_index(&day, &week)
+                                                ).unwrap().to_string()
+                                            ) {
+                                                let mut next_temp_temp_schedule = next_temp_schedule.clone();
+                                                for new_shift in &self.input.shifts {
+                                                    if !horizontal_coverage.shifts.contains(&new_shift.id) &&
+                                                        !["PH", "DO"].contains(&&*new_shift.id)
+                                                    {
+                                                        if let Some(inner_map) = next_temp_temp_schedule.get_mut(&staff.id.clone()) {
+                                                            inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), new_shift.id.clone());
+                                                        }
+                                                        if self.score.calculate_horizontal_coverage_score(&next_temp_schedule) <
+                                                            self.score.calculate_horizontal_coverage_score(&next_temp_temp_schedule) &&
+
+                                                            self.score.calculate_total_score(&next_temp_schedule) <=
+                                                                self.score.calculate_total_score(&next_temp_temp_schedule)
+                                                        {
+                                                            next_temp_schedule = next_temp_temp_schedule.clone();
+                                                            number_processing_horizontal +=1;
+                                                            break 'outer;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                else if value < horizontal_coverage.desire_value{
+                                    let mut number_processing_horizontal = 0;
+                                    while number_processing_horizontal < horizontal_coverage.desire_value - value {
+                                        'outer: for day in horizontal_coverage.days.clone() {
+                                            if !["PH", "DO"].contains(&&*solution::get_value(&next_temp_schedule, &staff.id, day.clone())
+                                                .unwrap()
+                                                .to_string()
+                                            ) && !horizontal_coverage.shifts.contains(&solution::get_value(&schedule, &staff.id, day.clone())
+                                                .unwrap()
+                                                .to_string()
+                                            ) {
+                                                for shift in horizontal_coverage.shifts.clone() {
+                                                    let mut next_temp_temp_schedule = next_temp_schedule.clone();
+                                                    if let Some(inner_map) = next_temp_temp_schedule.get_mut(&staff.id.clone()) {
+                                                        inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), shift);
+                                                    }
+                                                    if self.score.calculate_horizontal_coverage_score(&next_temp_schedule) <
+                                                        self.score.calculate_horizontal_coverage_score(&next_temp_temp_schedule) &&
+                                                        self.score.calculate_total_score(&next_temp_schedule) <=
+                                                            self.score.calculate_total_score(&next_temp_temp_schedule)
+                                                    {
+                                                        next_temp_schedule = next_temp_temp_schedule.clone();
+                                                        number_processing_horizontal += 1;
+                                                        break 'outer;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             for constraint in &self.input.constraints{
                 if constraint.priority == priority{
                     let list_constraint_upper_priority = self.rule.get_higher_priority_constraint(&constraint.priority, &&constraint.id);
@@ -1144,7 +1214,8 @@ impl<'a> Alns<'a> {
     fn shake_and_repair(
         &self,
         schedule: &mut HashMap<String,HashMap<i8, String>>, operator_index: i8
-    ) -> HashMap<String, HashMap<i8, String>> {
+    ) -> HashMap<String, HashMap<i8, String>>
+    {
         let result = match operator_index{
             0 => self.random_swap_staff_shift(schedule),
             1 => self.greedy_coverage_enhancement(schedule),
