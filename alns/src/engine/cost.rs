@@ -93,6 +93,6 @@ impl<'a> Score<'a> {
         self.calculate_horizontal_coverage_score(schedule)
             + self.calculate_coverage_score(schedule)
             + self.calculate_constraint_score( schedule)
-            //+ self.calculate_pattern_constraint_score(schedule)
+            + self.calculate_pattern_constraint_score(schedule)
     }
 }

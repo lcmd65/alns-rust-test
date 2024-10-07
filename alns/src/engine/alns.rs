@@ -8,7 +8,6 @@ use crate::solution::solution;
 use crate::utils::to_excel;
 use std::hash::Hash;
 use rand::{random, thread_rng, Rng};
-use crate::utils::random::random_choice;
 use crate::violation::rule::Rule;
 
 pub struct Alns<'a> {
@@ -31,12 +30,12 @@ impl<'a> Alns<'a> {
 
     pub fn new(input_data: &'a InputData) -> Self {
         let alns = Self {
-            max_iteration: 500,
+            max_iteration: 1000,
             delta_e: 0.0,
             limit: 1e-100,
             alpha: 0.95,
             temperature: 100.0,
-            operator_score: [0.2, 0.3, 0.1, 0.3, 0.1],
+            operator_score: [0.2, 0.4, 0.1, 0.2, 0.1],
             operator_weight: [0.0; 5],
             operator_time: [1.0; 5],
             operator_probabilities: [0.0; 5],
@@ -512,8 +511,8 @@ impl<'a> Alns<'a> {
                                                                 &staff_,
                                                                 date::convert_to_solution_hashmap_index(&day, &week)).unwrap().as_str()
                                                             {
-                                                                "M2" => { "M1".to_string() }
-                                                                "A2" => { "A1".to_string() }
+                                                                "M2" => { random::random_choice(&vec!["M1", "A1"]).to_string().to_string() }
+                                                                "A2" => { random::random_choice(&vec!["M1", "A1"]).to_string().to_string() }
                                                                 _ => {
                                                                     random::random_choice(&vec!["M1", "A1"]).to_string()
                                                                 }
@@ -557,12 +556,12 @@ impl<'a> Alns<'a> {
                                                                 .contains(&staff_)
                                                             {
                                                                 if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
-                                                                    inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "A1".to_string());
+                                                                    inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), random::random_choice(&vec!["M1", "A1"]).to_string());
                                                                 }
                                                             }
                                                             else {
                                                                 if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
-                                                                    inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "M1".to_string());
+                                                                    inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), random::random_choice(&vec!["M1", "A1"]).to_string());
                                                                 }
                                                             }
                                                             num += 1;
@@ -618,7 +617,7 @@ impl<'a> Alns<'a> {
                                                             date::convert_to_solution_hashmap_index(&day, &week)).unwrap().clone() == "M3".to_string()
                                                         {
                                                             if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
-                                                                inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "M1".to_string());
+                                                                inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), random::random_choice(&vec!["M1", "A1"]).to_string());
                                                             }
                                                             num += 1;
                                                             break;
@@ -637,7 +636,7 @@ impl<'a> Alns<'a> {
                                                     if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
                                                         inner_map.insert(
                                                             date::convert_to_solution_hashmap_index(&day, &week),
-                                                            "M2".to_string(),
+                                                            random::random_choice(&vec!["M2", "A2"]).to_string(),
                                                         );
                                                     };
                                                 }
@@ -713,9 +712,9 @@ impl<'a> Alns<'a> {
                                                             date::convert_to_solution_hashmap_index(&day, &week)
                                                         ).unwrap().as_str()) {
                                                             let new_s = match solution::get_value(&next_temp_schedule, &staff_, day).unwrap().as_str() {
-                                                                "A2" => { "A1" }
-                                                                "M2" => { "M1" }
-                                                                _ => {random::random_choice(&vec!["A1", "M1"]) }
+                                                                "A2" => { random::random_choice(&vec!["A1", "M1"]).to_string() }
+                                                                "M2" => { random::random_choice(&vec!["A1", "M1"]).to_string() }
+                                                                _ => {random::random_choice(&vec!["A1", "M1"]).to_string() }
                                                             };
                                                             if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
                                                                 inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), new_s.parse().unwrap());
@@ -740,9 +739,9 @@ impl<'a> Alns<'a> {
                                                                 &staff_,
                                                                 date::convert_to_solution_hashmap_index(&day, &week)).unwrap().as_str()
                                                             {
-                                                                "A1" => { "A2" }
-                                                                "M1" => { "M2" }
-                                                                _ => { random::random_choice(&vec!["A2", "M2"]) }
+                                                                "A1" => { random::random_choice(&vec!["M2", "A2"]).to_string() }
+                                                                "M1" => { random::random_choice(&vec!["M2", "A2"]).to_string() }
+                                                                _ => { random::random_choice(&vec!["A2", "M2"]).to_string() }
                                                             };
 
                                                             if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
