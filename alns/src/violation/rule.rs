@@ -1,4 +1,3 @@
-use std::arch::x86_64::_mm_test_mix_ones_zeros;
 use std::cmp::max;
 use std::collections::HashMap;
 use crate::constraint::constraint::Constraint;
