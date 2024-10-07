@@ -52,13 +52,11 @@ impl<'a> Alns<'a> {
         for index in 0..=4{
             if self.operator_weight[index] == 0.0 {
                 self.operator_weight[index] =
-                    0.4 +
-                    0.6 * self.operator_score[index] / self.operator_time[index];
+                    0.4 + 0.6 * self.operator_score[index] / self.operator_time[index];
             }
             else {
                 self.operator_weight[index] =
-                    0.4 * self.operator_weight[index] +
-                    0.6 * self.operator_score[index] / self.operator_time[index];
+                    0.4 * self.operator_weight[index] + 0.6 * self.operator_score[index] / self.operator_time[index];
             }
         }
     }
@@ -287,7 +285,9 @@ impl<'a> Alns<'a> {
                                     for shift in coverage.shift.clone() {
                                         next_schedule = schedule.clone();
                                         if let Some(inner_map) = next_schedule.get_mut(&staff.clone()) {
-                                            inner_map.insert(date::convert_to_solution_hashmap_index(&(&coverage.day - 1), &week), shift);
+                                            inner_map.insert(
+                                                date::convert_to_solution_hashmap_index(&(&coverage.day - 1), &week),
+                                                shift);
                                         }
                                         if self.score.calculate_coverage_score(&schedule) < self.score.calculate_coverage_score(&next_schedule) {
                                             return next_schedule.clone()
@@ -309,7 +309,9 @@ impl<'a> Alns<'a> {
                                     for staff in &staff_group.staff_list {
                                         next_schedule = schedule.clone();
                                         if let Some(inner_map) = next_schedule.get_mut(&staff.clone()) {
-                                            inner_map.insert(date::convert_to_solution_hashmap_index(&(&coverage.day - 1), &week), shift.id.clone());
+                                            inner_map.insert(
+                                                date::convert_to_solution_hashmap_index(&(&coverage.day - 1), &week),
+                                                shift.id.clone());
                                         }
                                         if self.score.calculate_coverage_score(&schedule) < self.score.calculate_coverage_score(&next_schedule) {
                                             return next_schedule.clone()
@@ -434,7 +436,9 @@ impl<'a> Alns<'a> {
                                     }
                                 }
 
-                                if self.score.calculate_coverage_score(&schedule) < self.score.calculate_coverage_score(&next_schedule) {
+                                if self.score.calculate_coverage_score(&schedule) < self.score.calculate_coverage_score(&next_schedule) &&
+                                    self.score.calculate_pattern_constraint_score(&schedule) <= self.score.calculate_pattern_constraint_score(&next_schedule)
+                                    {
                                     return next_schedule;
                                 }
                             }
@@ -462,8 +466,16 @@ impl<'a> Alns<'a> {
         for priority in (1..=10).rev() {
             for constraint in &self.input.constraints{
                 if constraint.priority == priority{
-                    let list_constraint_upper_priority = self.rule.get_higher_priority_constraint(&constraint.priority, &&constraint.id);
-                    let list_violation  = self.rule.list_number_constraint_violation(&list_constraint_upper_priority, &schedule);
+                    let list_constraint_upper_priority =
+                        self.rule.get_higher_priority_constraint(
+                            &constraint.priority,
+                            &&constraint.id
+                        );
+
+                    let list_violation  = self.rule.list_number_constraint_violation(
+                        &list_constraint_upper_priority,
+                        &schedule
+                    );
 
                     match constraint.id.as_str() {
                         "exactly-staff-working-time" => {
@@ -670,11 +682,17 @@ impl<'a> Alns<'a> {
                                                                     .contains(&staff_)
                                                                 {
                                                                     if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
-                                                                        inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "A1".to_string());
+                                                                        inner_map.insert(
+                                                                            date::convert_to_solution_hashmap_index(&day, &week),
+                                                                            "A1".to_string()
+                                                                        );
                                                                     }
                                                                 } else {
                                                                     if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
-                                                                        inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), random::random_choice(&vec!["M1", "A1"]).to_string());
+                                                                        inner_map.insert(
+                                                                            date::convert_to_solution_hashmap_index(&day, &week),
+                                                                            random::random_choice(&vec!["M1", "A1"]).to_string()
+                                                                        );
                                                                     }
                                                                 }
                                                             }

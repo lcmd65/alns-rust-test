@@ -13,9 +13,3 @@ pub struct PatternConstraint {
     pub (crate) is_hard: bool,
     pub (crate) penalty: i8,
 }
-
-impl PatternConstraint {
-    pub fn pattern_list(){
-
-    }
-}

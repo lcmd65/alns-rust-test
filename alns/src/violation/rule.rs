@@ -1,7 +1,9 @@
+use std::arch::x86_64::_mm_test_mix_ones_zeros;
 use std::cmp::max;
 use std::collections::HashMap;
 use crate::constraint::constraint::Constraint;
 use crate::constraint::InterfaceConstraint;
+use crate::constraint::pattern_constraint::PatternConstraint;
 use crate::input::input::InputData;
 use crate::coverage::coverage::Coverage;
 use crate::coverage::horizontal_coverage::HorizontalCoverage;
@@ -148,7 +150,8 @@ impl<'a> Rule<'a> {
         constraint: &Constraint,
         week: &i8,
         schedule: &HashMap<String, HashMap<i8, String>>
-    )-> HashMap<String, f32>{
+    )-> HashMap<String, f32>
+    {
         let mut map= match constraint.id.as_str() {
             "exactly-staff-working-time" => {
                 let mut temp_map :HashMap<String, f32> = HashMap::new();
@@ -184,6 +187,46 @@ impl<'a> Rule<'a> {
         };
 
         map
+    }
+
+    pub fn pattern_constraint_violation(
+        &self,
+        constraint: &PatternConstraint,
+        week: &i8,
+        schedule: &HashMap<String, HashMap<i8, String>>
+    )-> HashMap<String, f32>{
+
+        let mut temp_map :HashMap<String, f32> = HashMap::new();
+
+        for staff_group in &constraint.staff_groups {
+            for staff_ in &self.input.staff_groups.iter().find(|&x| x.id == *staff_group).unwrap().staff_list {
+                let mut violation = 0;
+                for pattern in &constraint.shift_patterns {
+                    for day in 0..=6 - pattern.len() as i8 {
+                        if solution::get_value(&schedule, &staff_, date::convert_to_solution_hashmap_index(&day, &week)).unwrap() == pattern[0] {
+                            let mut boolean = true;
+
+                            for index in 1..pattern.len() {
+                                if solution::get_value(
+                                    &schedule, &staff_,
+                                    date::convert_to_solution_hashmap_index(&(&day + index as i8), &week)
+                                ).unwrap() != pattern[index] {
+                                    boolean = false;
+                                    break;
+                                }
+                            }
+
+                            if boolean {
+                                violation += 1;
+                            }
+                        }
+                    }
+                }
+                temp_map.insert(staff_.clone(), violation as f32);
+            }
+        }
+
+        temp_map
     }
     /// violation constraint utils
 
@@ -239,8 +282,22 @@ impl<'a> Rule<'a> {
             }
             InterfaceConstraint::HorizontalCoverage(constraint_clone) => {
                 let mut number_violation = 0;
-                for week in 1.. self.input.schedule_period{
+                for week in 1..= self.input.schedule_period{
                     number_violation += self.calculate_number_horizontal_coverage_violation(&constraint_clone, &week, & schedule) as i32;
+                }
+
+                number_violation
+            }
+            InterfaceConstraint::PatternConstraint(constraint_clone) => {
+                let mut number_violation = 0;
+                for week in 1..= self.input.schedule_period{
+                    for week in 1..=self.input.schedule_period {
+                        let map_number_violation = self.pattern_constraint_violation(&constraint_clone, &week, &schedule);
+
+                        for (_, value) in map_number_violation{
+                            number_violation += value as i32;
+                        }
+                    }
                 }
 
                 number_violation
@@ -267,7 +324,8 @@ impl<'a> Rule<'a> {
         &self,
         current_constraint_priority: &i8,
         constraint_id: &String,
-    ) -> HashMap<i8, InterfaceConstraint> {
+    ) -> HashMap<i8, InterfaceConstraint>
+    {
         let mut map: HashMap<i8, InterfaceConstraint> = HashMap::new();
 
         for cons in &self.input.constraints.clone() {

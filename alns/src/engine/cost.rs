@@ -74,15 +74,25 @@ impl<'a> Score<'a> {
 
     pub(crate) fn  calculate_pattern_constraint_score(&self, schedule: &HashMap<String,HashMap<i8, String>>) -> f32{
 
-        -0.0
+        let mut score = 0.0 ;
+        for week in 1..=*&self.input.schedule_period{
+            for constraint in &self.input.pattern_constraints{
+                let mut map = self.rule.pattern_constraint_violation(&constraint, &week, &schedule);
+                for (_, value) in map {
+                    score += value as f32 * constraint.priority as f32 * constraint.penalty as f32;
+                }
+            }
+        }
+
+        -score
     }
 
 
     pub(crate) fn calculate_total_score(&self,  schedule: &HashMap<String,HashMap<i8, String>>) -> f32{
 
-        self.calculate_horizontal_coverage_score(schedule) +
-            self.calculate_coverage_score(schedule)+
-            self.calculate_constraint_score( schedule) +
-            self.calculate_pattern_constraint_score(schedule)
+        self.calculate_horizontal_coverage_score(schedule)
+            + self.calculate_coverage_score(schedule)
+            + self.calculate_constraint_score( schedule)
+            //+ self.calculate_pattern_constraint_score(schedule)
     }
 }

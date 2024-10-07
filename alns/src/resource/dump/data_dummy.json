@@ -46,7 +46,7 @@
       "constraint_type": "shiftPattern",
       "shift_patterns": [
         ["DO","A1"],
-        ["DO-A2"],
+        ["DO", "A2"],
         ["PH","A1"],
         ["PH","A2"]],
       "staff_groups": ["all_staffs"],
@@ -141,6 +141,20 @@
   ],
   "staff_groups": [
     {
+      "id": "all_staffs",
+      "staff_list": [
+        "Staff_1",
+        "Staff_2",
+        "Staff_3",
+        "Staff_4",
+        "Staff_5",
+        "Staff_6",
+        "Staff_7",
+        "Staff_8",
+        "Staff_9"
+      ]
+    },
+    {
       "id": "AG1",
       "staff_list": [
         "Staff_1",
@@ -157,13 +171,6 @@
         "Staff_9"
       ]
     },{
-      "id": "AG3",
-      "staff_list": [
-        "Staff_5",
-        "Staff_6"
-      ]
-    },
-    {
       "id": "AG3",
       "staff_list": [
         "Staff_5",
