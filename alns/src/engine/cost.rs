@@ -5,11 +5,6 @@ use crate::violation::rule::Rule;
 use crate::executor::formula_executor::FormulaExecutor;
 
 pub struct Score<'a> {
-    optimization_score: f32,
-    constraint_score: f32,
-    coverage_score:f32,
-    horizontal_coverage_score: f32,
-    pattern_constraint_score: f32,
     input: &'a InputData,
     rule: Rule<'a>,
     executor: FormulaExecutor
@@ -20,11 +15,6 @@ impl<'a> Score<'a> {
     pub(crate) fn new(input_data: &'a InputData) -> Self{
 
         let rule = Self {
-            optimization_score : 0.0,
-            constraint_score : 0.0,
-            coverage_score : 0.0,
-            horizontal_coverage_score : 0.0,
-            pattern_constraint_score :0.0,
             rule: Rule::new(&input_data),
             input: input_data,
             executor: FormulaExecutor

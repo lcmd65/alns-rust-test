@@ -8,6 +8,7 @@ use crate::solution::solution;
 use crate::utils::to_excel;
 use std::hash::Hash;
 use rand::{random, thread_rng, Rng};
+use crate::utils::random::random_choice;
 use crate::violation::rule::Rule;
 
 pub struct Alns<'a> {
@@ -35,7 +36,7 @@ impl<'a> Alns<'a> {
             limit: 1e-100,
             alpha: 0.95,
             temperature: 100.0,
-            operator_score: [0.2, 0.2, 0.2, 0.3, 0.1],
+            operator_score: [0.2, 0.3, 0.1, 0.3, 0.1],
             operator_weight: [0.0; 5],
             operator_time: [1.0; 5],
             operator_probabilities: [0.0; 5],
@@ -536,8 +537,21 @@ impl<'a> Alns<'a> {
                                                 while (num < counting_duration_day[&4] - 1) {
                                                     for day in 0..=6 {
                                                         if solution::get_value(&next_temp_schedule, &staff_, day).unwrap() == "DO" {
-                                                            if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
-                                                                inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "M1".to_string());
+                                                            if self.input.staff_groups
+                                                                .iter()
+                                                                .find(|&x| x.id == "AG3".to_string())
+                                                                .unwrap()
+                                                                .staff_list
+                                                                .contains(&staff_)
+                                                            {
+                                                                if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
+                                                                    inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "A1".to_string());
+                                                                }
+                                                            }
+                                                            else {
+                                                                if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
+                                                                    inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "M1".to_string());
+                                                                }
                                                             }
                                                             num += 1;
                                                             break;
@@ -562,7 +576,7 @@ impl<'a> Alns<'a> {
                                                                 inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), shift.id.clone());
                                                             }
                                                             list_next_schedule.insert(
-                                                                day as i8,
+                                                                day,
                                                                 next_temp_temp_schedule.clone()
                                                             );
                                                         }
@@ -648,7 +662,21 @@ impl<'a> Alns<'a> {
                                                             date::convert_to_solution_hashmap_index(&day, &week)).unwrap() == "DO"
                                                         {
                                                             if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
-                                                                inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "M1".to_string());
+                                                                if self.input.staff_groups
+                                                                    .iter()
+                                                                    .find(|&x| x.id == "AG3")
+                                                                    .unwrap()
+                                                                    .staff_list
+                                                                    .contains(&staff_)
+                                                                {
+                                                                    if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
+                                                                        inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "A1".to_string());
+                                                                    }
+                                                                } else {
+                                                                    if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
+                                                                        inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), random::random_choice(&vec!["M1", "A1"]).to_string());
+                                                                    }
+                                                                }
                                                             }
                                                             num += 1;
                                                             break;
@@ -669,7 +697,7 @@ impl<'a> Alns<'a> {
                                                             let new_s = match solution::get_value(&next_temp_schedule, &staff_, day).unwrap().as_str() {
                                                                 "A2" => { "A1" }
                                                                 "M2" => { "M1" }
-                                                                _ => { random::random_choice(&vec!["A1", "M1"]) }
+                                                                _ => {random::random_choice(&vec!["A1", "M1"]) }
                                                             };
                                                             if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
                                                                 inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), new_s.parse().unwrap());
@@ -1079,7 +1107,24 @@ impl<'a> Alns<'a> {
                                                             date::convert_to_solution_hashmap_index(&day, &week)
                                                         ).unwrap() == "DO" {
                                                             if let Some(inner_map) = next_temp_schedule.get_mut(&staff_) {
-                                                                inner_map.insert(date::convert_to_solution_hashmap_index(&day, &week), "M1".to_string());
+                                                                if self.input.staff_groups
+                                                                    .iter()
+                                                                    .find(|&x| x.id == "AG3")
+                                                                    .unwrap()
+                                                                    .staff_list
+                                                                    .contains(&staff_)
+                                                                {
+                                                                    inner_map.insert(
+                                                                        date::convert_to_solution_hashmap_index(&day, &week),
+                                                                        "A1".to_string()
+                                                                    );
+                                                                }
+                                                                else {
+                                                                    inner_map.insert(
+                                                                        date::convert_to_solution_hashmap_index(&day, &week),
+                                                                        "M1".to_string()
+                                                                    );
+                                                                }
                                                             }
                                                             num += 1;
                                                             break;
@@ -1302,7 +1347,9 @@ impl<'a> Alns<'a> {
         self.solution = current_solution.clone();
 
         for iter_num in 1..= self.max_iteration{
-            println!("iter: {}", iter_num);
+            if iter_num % 100 ==0 {
+                println!("iter: {}", iter_num);
+            }
 
             let operator_index = self.route_wheel(iter_num);
             self.operator_time[operator_index as usize] += 1.0;

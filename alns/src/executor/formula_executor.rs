@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 use regex::Regex;
-use std::cmp::max;
-
 
 pub struct FormulaExecutor;
 

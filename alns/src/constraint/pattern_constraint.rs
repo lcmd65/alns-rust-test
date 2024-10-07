@@ -1,8 +1,5 @@
-use std::iter::Map;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::hash::Hash;
-use rand::seq::index::IndexVec;
 
 #[derive(Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct PatternConstraint {

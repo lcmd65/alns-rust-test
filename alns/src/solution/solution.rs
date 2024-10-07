@@ -37,10 +37,10 @@ pub fn is_violation_core_day(
 ) -> bool{
     if schedule[staff].get(&index).unwrap().as_str() =="PH" ||
         schedule[staff].get(&index).unwrap().as_str() == "DO" {
-        return false
+        return true
     };
 
-    true
+    false
 }
 
 pub fn is_violation_public_holiday(
