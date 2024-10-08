@@ -29,11 +29,11 @@ This project implements the Adaptive Large Neighborhood Search (ALNS) algorithm 
 To use the ALNS module in your Rust project, you can include it as a dependency by adding the following to your Cargo.toml
 
 #### Refferences
-
-   @misc{
-      AIO Scientist,
-      author =       {Dat Le},
-      title =        {{Workfoce Optimizer: ALNS for shift roster problem}},
-      howpublished = {\url{https://github.com/lcmd65/alns-rust-test}},
-      year =         {2024}
-   }
+    
+       @misc{
+          AIO Scientist,
+          author =       {Dat Le},
+          title =        {{Workfoce Optimizer: ALNS for shift roster problem}},
+          howpublished = {\url{https://github.com/lcmd65/alns-rust-test}},
+          year =         {2024}
+       }
