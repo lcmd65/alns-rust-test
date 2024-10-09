@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use crate::coverage::coverage::Coverage;
 use crate::engine::cost::Score;
 use crate::input::input::InputData;
@@ -7,7 +7,7 @@ use crate::utils::date;
 use crate::solution::solution;
 use crate::utils::to_excel;
 use std::hash::Hash;
-use rand::{random, thread_rng, Rng};
+use rand::{random};
 use crate::violation::rule::Rule;
 
 pub struct Alns<'a> {

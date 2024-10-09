@@ -12,6 +12,18 @@ mod constraint;
 mod violation;
 mod executor;
 
+
+#[cfg(not(target_env = "msvc"))]
+use tikv_jemallocator::Jemalloc;
+
+
+#[cfg(not(target_env = "msvc"))]
+#[global_allocator]
+
+static GLOBAL: Jemalloc = Jemalloc;
+
+
+
 fn main() {
     let input_data = json::read_input_data_from_file("src/resource/dump/data_dummy.json")
         .expect("Failed to read input data from JSON file");
