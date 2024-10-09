@@ -3,18 +3,6 @@ use crate::utils::json;
 use crate::input::input::InputData;
 use std::net::SocketAddr;
 
-mod engine;
-mod input;
-mod staff;
-mod coverage;
-mod shift;
-mod solution;
-mod utils;
-mod constraint;
-mod violation;
-mod executor;
-mod test;
-
 use axum::{
     routing::get,
     Router,
@@ -22,12 +10,17 @@ use axum::{
     response::IntoResponse,
 };
 
-#[cfg(not(target_env = "msvc"))]
-use jemallocator::Jemalloc;
+fn main() {
+    let input_data = json::read_input_data_from_file("src/resource/dump/data_dummy.json")
+        .expect("Failed to read input data from JSON file");
 
-#[cfg(not(target_env = "msvc"))]
-#[global_allocator]
-static GLOBAL: Jemalloc = Jemalloc;
+    println!("[validate_input_data]");
+    let mut alns = Alns::new(&input_data);
+    println!("[alns start]");
+    alns.run_iteration();
+    println!("[end]");
+}
+
 
 async fn run_alns(Json(input_data): Json<InputData>) -> impl IntoResponse {
     println!("[validate_input_data]");
@@ -36,11 +29,11 @@ async fn run_alns(Json(input_data): Json<InputData>) -> impl IntoResponse {
     alns.run_iteration();
     println!("[end]");
 
-    Json(alns.solution)
+    Json("ALNS run completed")
 }
 
 #[tokio::main]
-async fn main() {
+async fn alns() {
     let app = Router::new().route("/run-alns-rust", get(run_alns));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();

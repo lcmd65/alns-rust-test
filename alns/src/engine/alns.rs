@@ -20,7 +20,7 @@ pub struct Alns<'a> {
     operator_weight: [f32; 5],
     operator_time: [f32; 5],
     operator_probabilities: [f32; 5],
-    solution: HashMap<String,HashMap<i8,String>>,
+    pub solution: HashMap<String,HashMap<i8,String>>,
     input: &'a InputData,
     score: Score<'a>,
     rule: Rule<'a>
@@ -1348,7 +1348,7 @@ impl<'a> Alns<'a> {
     }
 
     pub fn print_solution(&self){
-        to_excel::write_hashmap_to_excel(&self.solution.clone(),"src/output/output.xlsx");
+        //to_excel::write_hashmap_to_excel(&self.solution.clone(),"src/output/output.xlsx");
         let score_coverage = self.score.calculate_coverage_score(&self.solution);
         let h_score_coverage = self.score.calculate_horizontal_coverage_score(&self.solution);
         let score_constraint = self.score.calculate_constraint_score(&self.solution);
@@ -1380,7 +1380,5 @@ impl<'a> Alns<'a> {
         }
 
         //self.solution = self.adjustment(&mut self.solution.clone());
-
-        self.print_solution();
     }
 }

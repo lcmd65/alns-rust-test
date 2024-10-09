@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "backend"
+name = "alns"
 path = "src/main.rs"
 
 [dependencies]
@@ -16,10 +16,9 @@ dotenv = "0.15.0"
 axum-macros = "0.4.1"
 jsonwebtoken = "9.3.0"
 tokio = { version = "1.37.0", features = ["full"] }
-
 rand = "0.8"
 xlsxwriter = "0.6.1"
 regex = "1.11.0"
 
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
-tikv-jemallocator = "0.6.0"
+jemallocator = "0.5.4"
